@@ -1,7 +1,7 @@
-# Telegram bot assistant in real estate
+# Taphut
 
 [![Serverless](https://files.readme.io/ffb4c59-Serverless.png)](https://www.serverless.com/)
-Telegram bot assistant in real estate.
+Taphut is telegram bot assistant in real estate.
 
 ## License
 
