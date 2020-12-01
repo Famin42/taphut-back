@@ -1,6 +1,9 @@
-import { url } from 'inspector';
-import fetch from 'node-fetch';
+import fetch, { Response } from 'node-fetch';
 import { stringify } from 'querystring';
+
+import logger, { setDebugLevel } from 'utils/logger';
+
+setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
 /**
  * Sends text messafe to chat
@@ -8,8 +11,9 @@ import { stringify } from 'querystring';
  * @param chat_id telegram chat which will receive message
  * @param text text of message
  * @param token token from Telegram-bot which is needed for sensing message
+ * @return Response
  */
-export async function sendToUser({
+export function sendToUser({
   token,
   chat_id,
   text,
@@ -17,8 +21,10 @@ export async function sendToUser({
   token: string;
   chat_id: string;
   text: string;
-}): Promise<unknown> {
+}): Promise<Response> {
   const uri = new URL(`${getTelegramBaseURL(token)}/sendMessage?${stringify({ chat_id, text })}`);
+
+  logger.info(`URI from sendToUser: ${JSON.stringify(uri)}`);
 
   return fetch(uri);
 }

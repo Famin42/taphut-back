@@ -1,32 +1,31 @@
 import { APIGatewayProxyHandler, APIGatewayEvent, Context, Callback } from 'aws-lambda';
-import { mustEnv } from 'utils/env';
-import { httpSuccess, toLambdaHttpResponse } from 'utils/api-gateway';
+
+import { httpError, httpSuccess, IHttpResponse, toLambdaHttpResponse } from 'utils/api-gateway';
+import logger, { setDebugLevel } from 'utils/logger';
 import { sendToUser } from 'utils/telegram';
+import { Response } from 'node-fetch';
+import { mustEnv } from 'utils/env';
+
+setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
 const TG_BOT_TOKEN = 'TG_BOT_TOKEN';
 
-export const handler: APIGatewayProxyHandler = async (
-  event: APIGatewayEvent,
-  context: Context,
-  callback: Callback,
-): Promise<any> => {
+async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse> {
   const token: string = mustEnv(TG_BOT_TOKEN);
 
-  if (!event.body) {
-    throw new Error();
+  if (!body) {
+    logger.error(`APIGatewayEvent body is undefined: ${JSON.stringify(body)}`);
+    return httpError(400, 'chat_id is required');
   }
 
-  const body = JSON.parse(event.body);
-  const chat_id = body?.chat?.id;
-  let { text } = body?.message;
+  const { message } = JSON.parse(body);
+  const chat_id = message?.chat?.id;
+  let { text } = message;
 
-  console.log('\n\n\n------------------------------------------------\n\n\n');
-  console.log('******************** APIGatewayEvent ********************');
-  console.log(JSON.stringify(event, null, 2));
-  console.log('\n\n\n------------------------------------------------\n\n\n');
-  console.log('******************** Context ********************');
-  console.log(JSON.stringify(context, null, 2));
-  console.log('\n\n\n------------------------------------------------\n\n\n');
+  if (!chat_id) {
+    logger.error(`chat_id is required: ${JSON.stringify(chat_id)}`);
+    return httpError(400, 'chat_id is required');
+  }
 
   if (text) {
     text = `Your text:\n${text}`;
@@ -34,15 +33,28 @@ export const handler: APIGatewayProxyHandler = async (
     text = 'Text message is expected.';
   }
 
-  const res: unknown = await sendToUser({
+  const response: Response = await sendToUser({
     chat_id,
     text,
     token,
   });
+  const json = await response.json();
 
-  console.log('******************** result from sendToUser ********************');
-  console.log(JSON.stringify(res, null, 2));
-  console.log('\n\n\n------------------------------------------------\n\n\n');
+  logger.info(`Response from sendToUser: ${JSON.stringify(json)}`);
+  return httpSuccess();
+}
 
-  callback(null, toLambdaHttpResponse(httpSuccess({})));
+export const handler: APIGatewayProxyHandler = async (
+  event: APIGatewayEvent,
+  context: Context,
+  callback: Callback,
+): Promise<any> => {
+  logger.info(`APIGatewayEvent event: ${JSON.stringify(event)}`);
+  logger.info(`APIGatewayEvent context: ${JSON.stringify(context)}`);
+
+  const res: IHttpResponse = await processMessage(event);
+
+  logger.info(`processMessage result: ${JSON.stringify(res)}`);
+
+  callback(null, toLambdaHttpResponse(res));
 };

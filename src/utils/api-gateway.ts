@@ -43,7 +43,7 @@ export function httpError(code: number, message: string, headers?: IHeaderDict):
  * @param {object} payload
  * @returns {IHttpResponse}
  */
-export function httpSuccess(payload: unknown, headers?: IHeaderDict): IHttpResponse {
+export function httpSuccess(payload?: unknown, headers?: IHeaderDict): IHttpResponse {
   return {
     statusCode: 200,
     body: payload,
