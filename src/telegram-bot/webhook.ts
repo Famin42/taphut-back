@@ -1,35 +1,24 @@
 import { APIGatewayProxyHandler, APIGatewayEvent, Context, Callback } from 'aws-lambda';
-import * as rp from 'request-promise';
-import 'source-map-support/register';
+import { mustEnv } from 'utils/env';
+import { httpSuccess, toLambdaHttpResponse } from 'utils/api-gateway';
+import { sendToUser } from 'utils/telegram';
 
-const TG_BOT_TOKEN: string | undefined = process.env.TG_BOT_TOKEN;
-async function sendToUser(chat_id: string, text: string): Promise<unknown> {
-  const options = {
-    method: 'GET',
-    uri: `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,
-    qs: {
-      chat_id,
-      text,
-    },
-  };
-  return rp(options);
-}
+const TG_BOT_TOKEN = 'TG_BOT_TOKEN';
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayEvent,
   context: Context,
   callback: Callback,
 ): Promise<any> => {
-  if (!TG_BOT_TOKEN) {
-    throw new Error('There is no TG_BOT_TOKEN!');
-  }
+  const token: string = mustEnv(TG_BOT_TOKEN);
 
   if (!event.body) {
     throw new Error();
   }
 
   const body = JSON.parse(event.body);
-  const { chat, text } = body.message;
+  const chat_id = body?.chat?.id;
+  let { text } = body?.message;
 
   console.log('\n\n\n------------------------------------------------\n\n\n');
   console.log('******************** APIGatewayEvent ********************');
@@ -38,17 +27,22 @@ export const handler: APIGatewayProxyHandler = async (
   console.log('******************** Context ********************');
   console.log(JSON.stringify(context, null, 2));
   console.log('\n\n\n------------------------------------------------\n\n\n');
-  console.log('******************** Callback ********************');
-  console.log(JSON.stringify(callback, null, 2));
-  console.log('\n\n\n------------------------------------------------\n\n\n');
 
   if (text) {
-    await sendToUser(chat.id, `Your text:\n${text}`);
+    text = `Your text:\n${text}`;
   } else {
-    await sendToUser(chat.id, 'Text message is expected.');
+    text = 'Text message is expected.';
   }
 
-  return {
-    statusCode: 200,
-  };
+  const res: unknown = await sendToUser({
+    chat_id,
+    text,
+    token,
+  });
+
+  console.log('******************** result from sendToUser ********************');
+  console.log(JSON.stringify(res, null, 2));
+  console.log('\n\n\n------------------------------------------------\n\n\n');
+
+  callback(null, toLambdaHttpResponse(httpSuccess({})));
 };
