@@ -1,37 +1,68 @@
 {
   "name": "taphut",
   "version": "1.0.0",
-  "description": "Serverless webpack example using Typescript",
+  "description": "Backend for Taphut webapp",
   "main": "handler.js",
   "scripts": {
     "lint": "eslint . --ext js,ts --cache --fix",
     "prettier": "prettier --list-different './**/*.{js,ts}'",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "testwatch": "jest --watch",
+    "localstack": "localstack start",
+    "dynamodb-admin": "env-cmd config/local.env dynamodb-admin",
+    "invokelocal": "bin/invokelocal",
+    "sls": "bin/slscall",
+    "repl": "local-repl",
+    "script-prod": "NODE_PATH=./src env-cmd config/prod.env ts-node"
+  },
+  "lint-staged": {
+    "**/*.{ts,js,json}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@types/request-promise": "^4.1.46",
+    "big.js": "^6.0.2",
+    "lodash": "^4.17.20",
+    "path": "^0.12.7",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
-    "source-map-support": "^0.5.10"
+    "source-map-support": "^0.5.10",
+    "yargs": "^16.1.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.17",
+    "@types/big.js": "^6.0.0",
+    "@types/lodash": "^4.14.165",
     "@types/node": "^10.12.18",
+    "@types/node-fetch": "^2.5.7",
+    "@types/prettier": "^2.1.5",
     "@types/serverless": "^1.72.5",
+    "@types/webpack-node-externals": "^2.5.0",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
+    "chalk": "^4.1.0",
     "eslint": "^7.12.1",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
     "fork-ts-checker-webpack-plugin": "^3.0.1",
+    "husky": "^4.3.0",
+    "lint-staged": "^10.5.2",
+    "node-fetch": "^2.6.1",
     "prettier": "^2.1.2",
+    "serverless-plugin-aws-alerts": "^1.6.1",
     "serverless-webpack": "^5.2.0",
     "ts-loader": "^5.3.3",
     "ts-node": "^8.10.2",
     "typescript": "^3.2.4",
     "webpack": "^4.29.0",
     "webpack-node-externals": "^1.7.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
   "author": "The serverless webpack authors (https://github.com/elastic-coders/serverless-webpack)",
   "license": "MIT"

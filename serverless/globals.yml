@@ -1,0 +1,24 @@
+# custom:
+webpack:
+  webpackConfig: '../../config/webpack.config.js'
+  includeModules:
+    forceExclude:
+      - aws-sdk
+    packagePath: '../../package.json'
+  packager: 'yarn'
+
+# custom:
+alerts:
+  stages: # select which stages to deploy alarms to
+    - prod
+    - dev
+  dashboards: true
+  topics:
+    alarm:
+      topic: lambda-alarms-${opt:stage}-${self:service}
+      notifications:
+        - protocol: email
+          endpoint: alexfomin2402@gmail.com
+  alarms:
+    - functionThrottles
+    - functionErrors

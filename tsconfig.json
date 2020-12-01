@@ -1,20 +1,40 @@
 {
   "compilerOptions": {
-    "lib": ["es2017"],
     "removeComments": true,
-    "moduleResolution": "node",
-    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "sourceMap": true,
+    "outDir": ".build",
+    "noImplicitAny": true,
+    "allowJs": true,
+    "checkJs": true,
+    "moduleResolution": "node",
+    "module": "commonjs",
     "target": "es2017",
-    "outDir": "lib"
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "lib": [
+      "es2017",
+      "es2017.object",
+      "es2015.promise",
+      "es2015.symbol",
+      "es2015.symbol.wellknown",
+      "es2015.collection",
+      "es2015.iterable",
+      "dom",
+      "scripthost"
+    ],
+    "baseUrl": "./src"
   },
-  "include": ["./**/*.ts"],
+  "include": ["./src/**/*"],
   "exclude": [
     "node_modules/**/*",
     ".serverless/**/*",
     ".webpack/**/*",
     "_warmup/**/*",
-    ".vscode/**/*"
+    ".vscode/**/*",
+    "./src/scripts",
+    "./config/webpack.config.js"
   ]
 }
