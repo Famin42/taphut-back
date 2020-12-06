@@ -4,6 +4,7 @@ import { httpError, httpSuccess, IHttpResponse, toLambdaHttpResponse } from 'uti
 import logger, { setDebugLevel } from 'utils/logger';
 import { mustEnv } from 'utils/env';
 import { buildParser } from './cli';
+import { sendToUser } from 'utils/telegram';
 
 setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
@@ -17,7 +18,24 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
     return httpError(400, 'chat_id is required');
   }
 
-  const { message } = JSON.parse(body);
+  const { message, edited_message } = JSON.parse(body);
+  try {
+    if (!message) {
+      if (!edited_message) {
+        return httpError(500, 'Smth went wrong');
+      }
+
+      sendToUser({
+        token,
+        chat_id: edited_message.chat.id as string,
+        text: 'Only new messages are expected',
+      });
+      return httpSuccess();
+    }
+  } catch (error) {
+    return httpError(500, 'Smth went wrong');
+  }
+
   const chat_id = message?.chat?.id;
   const { text: stringCommand } = message;
 
