@@ -3,7 +3,7 @@ import { filtersToString } from 'utils/converters/filter';
 import { getFilters } from 'utils/filter';
 import { Argv } from 'yargs';
 
-const COMMAND = 'filter-list';
+const COMMAND = ['filter-list', 'fl'];
 const DESCRIPTION = 'List all filters';
 
 function buildGetFiltersByChatId<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
