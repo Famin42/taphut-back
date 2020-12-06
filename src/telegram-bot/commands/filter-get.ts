@@ -3,7 +3,7 @@ import { filterToString } from 'utils/converters/filter';
 import { getFilterById, IFIlter } from 'utils/filter';
 import { Argv } from 'yargs';
 
-const COMMAND = 'filter-get';
+const COMMAND = ['filter-get', 'fg'];
 const DESCRIPTION = 'Get filter by name';
 const EXAMPLE = 'filter-get -n filterName';
 
