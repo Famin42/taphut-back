@@ -2,9 +2,8 @@ import { APIGatewayProxyHandler, APIGatewayEvent, Context, Callback } from 'aws-
 
 import { httpError, httpSuccess, IHttpResponse, toLambdaHttpResponse } from 'utils/api-gateway';
 import logger, { setDebugLevel } from 'utils/logger';
-import { sendToUser } from 'utils/telegram';
-import { Response } from 'node-fetch';
 import { mustEnv } from 'utils/env';
+import { buildParser } from './cli';
 
 setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
@@ -20,34 +19,23 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
 
   const { message } = JSON.parse(body);
   const chat_id = message?.chat?.id;
-  let { text } = message;
+  const { text } = message;
 
   if (!chat_id) {
     logger.error(`chat_id is required: ${JSON.stringify(chat_id)}`);
     return httpError(400, 'chat_id is required');
   }
 
-  if (text) {
-    text = `Your text:\n${text}`;
-  } else {
-    text = 'Text message is expected.';
-  }
+  const parser = buildParser({ chatId: chat_id, token });
+  parser(text);
 
-  const response: Response = await sendToUser({
-    chat_id,
-    text,
-    token,
-  });
-  const json = await response.json();
-
-  logger.info(`Response from sendToUser: ${JSON.stringify(json)}`);
   return httpSuccess();
 }
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayEvent,
   context: Context,
-  callback: Callback,
+  callback: Callback
 ): Promise<any> => {
   logger.info(`APIGatewayEvent event: ${JSON.stringify(event)}`);
   logger.info(`APIGatewayEvent context: ${JSON.stringify(context)}`);
