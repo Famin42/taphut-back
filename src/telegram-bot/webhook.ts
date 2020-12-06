@@ -19,15 +19,16 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
 
   const { message } = JSON.parse(body);
   const chat_id = message?.chat?.id;
-  const { text } = message;
+  const { text: stringCommand } = message;
 
   if (!chat_id) {
     logger.error(`chat_id is required: ${JSON.stringify(chat_id)}`);
     return httpError(400, 'chat_id is required');
   }
 
+  logger.info(`Build Parser`);
   const parser = buildParser({ chatId: chat_id, token });
-  parser(text);
+  parser(stringCommand);
 
   return httpSuccess();
 }

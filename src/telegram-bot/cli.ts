@@ -1,11 +1,15 @@
-import { Arguments, Argv, InferredOptionTypes, Options, usage } from 'yargs';
+import { Arguments, Argv, InferredOptionTypes, Options } from 'yargs';
+import yargs = require('yargs/yargs');
 
 import { sendToUser } from '../utils/telegram';
+import logger, { setDebugLevel } from 'utils/logger';
+import { adddGetFiltersCommand } from './commands/filter-list';
+import { adddGetFilterByIdCommand } from './commands/filter-get';
 import { adddCreateFilterCommand } from './commands/filter-create';
 import { adddDeleteFilterByIdCommand } from './commands/filter-delete';
-import { adddGetFilterByIdCommand } from './commands/filter-get';
 import { adddUpdateFilterByIdCommand } from './commands/filter-update';
-import { adddGetFiltersCommand } from './commands/filter-list';
+
+setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
 export type Context = {
   respond: (msg: string) => void;
@@ -42,14 +46,15 @@ function addCommands<T>({ argv, chatId }: CommandBuilderType<T>): Argv<T> {
 }
 
 export function buildParser({ token, chatId }: buildParserParams): (stringCommand: string) => void {
-  const argv = usage('[command]');
+  const argv = yargs().usage('[command]');
   const parser = addCommands({
     argv,
     chatId,
   })
     .demand(1)
     .strict()
-    .help()
+    .help('h')
+    .help('help')
     .epilog('telegram-bot Taphut');
 
   const context: Context = {
@@ -57,6 +62,7 @@ export function buildParser({ token, chatId }: buildParserParams): (stringComman
   };
 
   return (stringCommand: string) => {
+    logger.info(`Command to parse: ${stringCommand}`);
     parser.parse(stringCommand || '', context, (err: any, argv: any, output: any) => {
       if (err) console.log(err.message);
       if (output) {
