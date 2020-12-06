@@ -2,7 +2,6 @@
   "name": "taphut",
   "version": "1.0.0",
   "description": "Backend for Taphut webapp",
-  "main": "handler.js",
   "scripts": {
     "lint": "eslint . --ext js,ts --cache --fix",
     "prettier": "prettier --list-different './**/*.{js,ts}'",
@@ -14,7 +13,7 @@
     "invokelocal": "bin/invokelocal",
     "sls": "bin/slscall",
     "repl": "local-repl",
-    "script-prod": "NODE_PATH=./src env-cmd config/prod.env ts-node"
+    "script-dev": "NODE_PATH=./src env-cmd config/dev.env ts-node"
   },
   "lint-staged": {
     "**/*.{ts,js,json}": [
@@ -39,10 +38,13 @@
     "@types/node-fetch": "^2.5.7",
     "@types/prettier": "^2.1.5",
     "@types/serverless": "^1.72.5",
+    "@types/string-argv": "^0.3.0",
     "@types/webpack-node-externals": "^2.5.0",
+    "@types/yargs": "^15.0.11",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
     "chalk": "^4.1.0",
+    "env-cmd": "8.0.1",
     "eslint": "^7.12.1",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
@@ -53,7 +55,7 @@
     "serverless-plugin-aws-alerts": "^1.6.1",
     "serverless-webpack": "^5.2.0",
     "ts-loader": "^5.3.3",
-    "ts-node": "^8.10.2",
+    "ts-node": "^9.1.0",
     "typescript": "^3.2.4",
     "webpack": "^4.29.0",
     "webpack-node-externals": "^1.7.2"
