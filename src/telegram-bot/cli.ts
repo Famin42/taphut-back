@@ -46,7 +46,7 @@ function addCommands<T>({ argv, chatId }: CommandBuilderType<T>): Argv<T> {
 }
 
 export function buildParser({ token, chatId }: buildParserParams): (stringCommand: string) => void {
-  const argv = yargs().usage('[command]');
+  const argv = yargs().scriptName('').usage('[command]');
   const parser = addCommands({
     argv,
     chatId,
@@ -57,7 +57,7 @@ export function buildParser({ token, chatId }: buildParserParams): (stringComman
     .alias('v', 'version')
     .help('h')
     .alias('h', 'help')
-    .epilog('telegram-bot Taphut');
+    .epilog('Taphut');
 
   const context: Context = {
     respond: buildResponder(token, chatId),
