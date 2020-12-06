@@ -5,10 +5,11 @@ import { Argv } from 'yargs';
 
 const COMMAND = 'filter-get';
 const DESCRIPTION = 'Get filter by name';
+const EXAMPLE = 'filter-get -n filterName';
 
 function buildGetFilterById<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
-    const filterName = 'MOCK_FILTER_6';
+    const filterName = argv.name as string;
     const filter: IFIlter | undefined = await getFilterById(chatId, filterName);
 
     if (filter) {
@@ -19,6 +20,17 @@ function buildGetFilterById<O extends CustomExtend>(chatId: string): CustomArgvH
   };
 }
 
+const defineCommandParameter: any = <T>(argv: Argv<T>) => {
+  return argv
+    .options('n', {
+      alias: 'name',
+      demandOption: true,
+      describe: 'Filter name',
+      type: 'string',
+    })
+    .example(EXAMPLE, DESCRIPTION);
+};
+
 export function adddGetFilterByIdCommand<T>({ chatId, argv }: CommandBuilderType<T>): Argv<T> {
-  return argv.command(COMMAND, DESCRIPTION, {}, buildGetFilterById(chatId));
+  return argv.command(COMMAND, DESCRIPTION, defineCommandParameter, buildGetFilterById(chatId));
 }

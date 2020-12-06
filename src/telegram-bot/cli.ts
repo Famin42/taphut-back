@@ -53,8 +53,10 @@ export function buildParser({ token, chatId }: buildParserParams): (stringComman
   })
     .demand(1)
     .strict()
+    .version('v')
+    .alias('v', 'version')
     .help('h')
-    .help('help')
+    .alias('h', 'help')
     .epilog('telegram-bot Taphut');
 
   const context: Context = {
