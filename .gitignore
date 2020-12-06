@@ -116,6 +116,7 @@ logs/
 .webpack
 .serverless
 .terraform
+.terraform.lock.*
 terraform.tfstate*
 
 # testing
