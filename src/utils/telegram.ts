@@ -29,6 +29,6 @@ export function sendToUser({
   return fetch(uri);
 }
 
-function getTelegramBaseURL(token: string): string {
+export function getTelegramBaseURL(token: string): string {
   return `https://api.telegram.org/bot${token}`;
 }

@@ -5,11 +5,7 @@ setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
 const FILTERS_MAX_COUNT = 10;
 
-export const enum Currency {
-  USD = 'USD',
-  BYN = 'BYN',
-  EUR = 'EUR',
-}
+type Currency = 'USD' | 'BYN' | 'EUR';
 
 export interface IFIlter {
   filterName: string;
