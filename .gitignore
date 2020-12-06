@@ -109,3 +109,25 @@ dist
 logs/
 
 .vscode/
+
+# deployment
+/build
+/.build
+.webpack
+.serverless
+.terraform
+terraform.tfstate*
+
+# testing
+/coverage
+
+# misc
+.DS_Store
+*.env.local
+/.vscode/chrome
+.serverless
+.idea
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
