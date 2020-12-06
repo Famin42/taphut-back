@@ -5,7 +5,7 @@ import { adddCreateFilterCommand } from './commands/filter-create';
 import { adddDeleteFilterByIdCommand } from './commands/filter-delete';
 import { adddGetFilterByIdCommand } from './commands/filter-get';
 import { adddUpdateFilterByIdCommand } from './commands/filter-update';
-import { adddGetFiltersCommand } from './commands/filtter-list';
+import { adddGetFiltersCommand } from './commands/filter-list';
 
 export type Context = {
   respond: (msg: string) => void;
@@ -33,11 +33,11 @@ type buildParserParams = {
 };
 
 function addCommands<T>({ argv, chatId }: CommandBuilderType<T>): Argv<T> {
-  argv = adddGetFiltersCommand({ argv, chatId });
-  argv = adddGetFilterByIdCommand({ argv, chatId });
-  argv = adddCreateFilterCommand({ argv, chatId });
-  argv = adddUpdateFilterByIdCommand({ argv, chatId });
-  argv = adddDeleteFilterByIdCommand({ argv, chatId });
+  argv = adddGetFiltersCommand({ argv, chatId }); //        filter-list
+  argv = adddGetFilterByIdCommand({ argv, chatId }); //     filter-get
+  argv = adddCreateFilterCommand({ argv, chatId }); //      filter-create
+  argv = adddUpdateFilterByIdCommand({ argv, chatId }); //  filter-update
+  argv = adddDeleteFilterByIdCommand({ argv, chatId }); //  filter-delete
   return argv;
 }
 

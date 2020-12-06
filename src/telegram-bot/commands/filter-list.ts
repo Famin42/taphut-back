@@ -1,4 +1,5 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
+import { filtersToString } from 'utils/converters/filter';
 import { getFilters } from 'utils/filter';
 import { Argv } from 'yargs';
 
@@ -7,9 +8,9 @@ const DESCRIPTION = 'List all filters';
 
 function buildGetFiltersByChatId<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
-    let result: any = await getFilters(chatId);
-    result = 'getFiltersByChatId executed success';
-    argv.respond(result);
+    const filters: any = await getFilters(chatId);
+    const msg = filtersToString(filters);
+    argv.respond(msg);
   };
 }
 

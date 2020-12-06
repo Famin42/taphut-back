@@ -1,5 +1,6 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
-import { getFilterById } from 'utils/filter';
+import { filterToString } from 'utils/converters/filter';
+import { getFilterById, IFIlter } from 'utils/filter';
 import { Argv } from 'yargs';
 
 const COMMAND = 'filter-get';
@@ -7,10 +8,14 @@ const DESCRIPTION = 'Get filter by name';
 
 function buildGetFilterById<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
-    const filterId = 'filterId';
-    let result: any = await getFilterById(chatId, filterId);
-    result = 'getFilterById executed success';
-    argv.respond(result);
+    const filterName = 'MOCK_FILTER_6';
+    const filter: IFIlter | undefined = await getFilterById(chatId, filterName);
+
+    if (filter) {
+      argv.respond(filterToString(filter));
+    } else {
+      argv.respond(`"${filterName}" filter doesn't exist!`);
+    }
   };
 }
 
