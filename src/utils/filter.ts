@@ -5,7 +5,7 @@ setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
 const FILTERS_MAX_COUNT = 10;
 
-type Currency = 'USD' | 'BYN' | 'EUR';
+export type Currency = 'USD' | 'BYN' | 'EUR';
 
 export interface IFIlter {
   filterName: string;
