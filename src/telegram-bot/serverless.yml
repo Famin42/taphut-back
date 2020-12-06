@@ -1,0 +1,58 @@
+# serverless.yml
+
+service: taphut
+
+frameworkVersion: '2'
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-aws-alerts
+
+provider:
+  name: aws
+  endpointType: regional
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment: # Service wide environment variables
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    TG_BOT_TOKEN: '${ssm:/taphut/tg-bot-token~true}'
+    USER_POOL_ID: ${env:USER_POOL_ID}
+  # List of API keys to be used by your service API Gateway REST API
+  # apiKeys:
+  #  - myFirstKey
+  #     value: myFirstKeyValue
+  #     description: myFirstKeyDescription
+  #     customerId: myFirstKeyCustomerId
+  #   - ${opt:stage}-myFirstKey
+  #   - ${env:MY_API_KEY} # you can hide it in a serverless variable
+  iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
+    - Effect: 'Allow'
+      Action:
+        - ssm:DescribeParameters
+        - ssm:GetParameter
+      Resource:
+        - 'arn:aws:ssm:${opt:region, self:provider.region}:*:parameter/taphut/tg-bot-token'
+
+functions:
+  hello:
+    handler: webhook.handler
+    description: Taphut telegram-bot webhook
+    memorySize: 256
+    timeout: 5
+    events:
+      - http:
+          path: bot-api
+          method: post
+          cors: true
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  webpack: ${file(../../serverless/globals.yml):webpack}
+  alerts: ${file(../../serverless/globals.yml):alerts}
+
+# Modes for config validation. The default is warn.
+# `error` throws an exception,
+# `warn` logs error to console,
+# `off` disables validation at all.
+configValidationMode: error

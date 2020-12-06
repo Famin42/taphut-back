@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ "$#" -lt "2" ]; then
+  echo "Bad args. Syntax: $0 serverless_dir functionName"
+  exit
+fi
+export directory=$1
+shift 1
+set -a
+. config/local.env
+. config/local.env.local
+set +a
+cd $directory
+export AWS_ACCESS_KEY_ID="key"
+export AWS_SECRET_ACCESS_KEY="secret"
+serverless invoke local --region localhost --stage dev --function "$@" | grep -v "Load command"

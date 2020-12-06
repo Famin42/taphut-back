@@ -1,0 +1,69 @@
+#!/bin/bash
+display_serverless_directories() {
+  echo ""
+  echo "Available serverless directories:"
+  find . -path ./node_modules -prune -o -name serverless.yml -print | sed 's/\/serverless.yml//;s/.\///'
+}
+
+SYNTAX_STRING='yarn sls [dev|prod] serverless_dir ...serverless_args'
+EXAMPLE_STRING='yarn sls dev src/ticker logs -f refreshTicker'
+
+if [ "$1" = "--help" ]; then
+  echo "Help from the serverless command (pass this in place of ...serverless_args):"
+  serverless --help
+  display_serverless_directories
+  echo ""
+  echo "Command syntax: $SYNTAX_STRING"
+  echo "Example: $EXAMPLE_STRING"
+  exit
+fi
+if [ "$#" -lt "3" ]; then
+  echo "Bad args. Syntax: $SYNTAX_STRING"
+  echo "Example: $EXAMPLE_STRING"
+  display_serverless_directories
+  echo ""
+  echo "yarn sls --help for more details on serverless commands"
+  exit
+fi
+
+export stage=$1
+export directory=$2
+shift 2
+
+branch=`git symbolic-ref -q --short HEAD`
+if [ "$stage" = "prod" ]; then
+  if echo $* | grep -q deploy; then
+    if [ "$branch" != "master" ]; then
+      echo "current branch $branch != master. Prod deploy disallowed"
+      exit
+    fi
+
+    # ok, we're on master and it's a prod deploy
+
+    # ensure we're up to date with remote
+    git remote update
+    local=$(git rev-parse master)
+    remote=$(git rev-parse origin/master)
+    if [ $local != $remote ]; then
+      echo "your local checkout must be up to date before prod deployment!"
+      exit
+    fi
+    echo "Good to go for prod deploy. On master, fully up to date with remote..."
+  fi
+fi
+
+
+
+if [ "$stage" = "forceprod" ]; then
+  echo "!!!!!Forcing prod deployment!!!!!"
+  stage="prod"
+fi
+
+export $(cat config/$stage.env | xargs)
+cd $directory
+profile=$stage
+if [ $stage = "prod" ]; then
+  profile=prod-direct
+fi
+export $(aws-vault exec $profile --no-session -- env | grep AWS)
+serverless --profile $profile --stage $stage "$@" --color | grep -v "Load command"
