@@ -1,6 +1,8 @@
 import { createLogger, format, transports, Logger } from 'winston';
 const { combine, printf, timestamp } = format;
 
+const colorizer = format.colorize();
+
 const consoleTransport = new transports.Console({
   // silence logging when the yarn command contains "test" as a substring
   silent: (process.env.npm_lifecycle_event || '').indexOf('test') >= 0,
@@ -11,7 +13,7 @@ export function setDebugLevel(newLevel: string): void {
 
 const myFormat = printf((info: any) => {
   const msg = typeof info.message === 'string' ? info.message : JSON.stringify(info.message);
-  return `${info.timestamp} [${info.level}] ${msg}`;
+  return colorizer.colorize(info.level, `${info.timestamp} [${info.level}] ${msg}`);
 });
 
 const winstonLogger = createLogger({
