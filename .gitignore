@@ -132,3 +132,7 @@ terraform.tfstate*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+prod.env
+dev.env
+local.env
