@@ -21,6 +21,7 @@
     ]
   },
   "dependencies": {
+    "aws-sdk": "^2.805.0",
     "big.js": "^6.0.2",
     "lodash": "^4.17.20",
     "node-fetch": "^2.6.1",
