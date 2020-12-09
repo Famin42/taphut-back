@@ -1,9 +1,18 @@
+import { TABLES } from 'constants/tables';
 import logger, { setDebugLevel } from 'utils/logger';
-import { MOCK_FILTERS } from './mock/filter.mock';
+import {
+  DynamoDB_Query,
+  DynamoDB_Get,
+  DynamoDB_Put,
+  DynamoDB_Delete,
+  DynamoDB_Update,
+  ItemNotFoundError,
+  IQueryOutput,
+} from 'utils/dynamodb';
 
 setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
-const FILTERS_MAX_COUNT = 10;
+const FILTERS_MAX_COUNT = 5;
 
 export type Currency = 'USD' | 'BYN' | 'EUR';
 
@@ -20,30 +29,37 @@ export interface IFIlterRaw {
   chatId: string;
   filterName: string;
   createdAt: string;
-  updateAt: string;
+  updatedAt: string;
   filter: IFIlter;
 }
 
-export async function getFilters(chatId: string): Promise<IFIlter[]> {
+export async function getFilters(chatId: string): Promise<IQueryOutput<IFIlterRaw>> {
   logger.info(`getFiltersByChatId`);
   logger.info(`chatId: ${JSON.stringify(chatId)}`);
 
-  return MOCK_FILTERS;
+  return await DynamoDB_Query<IFIlterRaw>({
+    TableName: TABLES.TelegramUserFilters,
+    KeyConditionExpression: 'chatId = :chatId',
+    ExpressionAttributeValues: { ':chatId': chatId },
+  });
 }
 
-export async function getFilterById(
-  chatId: string,
-  filterName: string
-): Promise<IFIlter | undefined> {
+export async function getFilterById(chatId: string, filterName: string): Promise<IFIlterRaw> {
   logger.info(`getFilterById`);
   logger.info(`chatId: ${chatId},`);
   logger.info(`filterName: ${JSON.stringify(filterName)}`);
 
-  const filter: IFIlter | undefined = MOCK_FILTERS.find(
-    (f: IFIlter) => f.filterName === filterName
-  );
-
-  return filter;
+  try {
+    return await DynamoDB_Get<IFIlterRaw>({
+      TableName: TABLES.TelegramUserFilters,
+      Key: { chatId, filterName },
+    });
+  } catch (error) {
+    if (!(error instanceof ItemNotFoundError)) {
+      logger.error(error.message);
+    }
+    throw error;
+  }
 }
 
 export async function createFilter(chatId: string, filter: IFIlter): Promise<IFIlter> {
@@ -51,56 +67,100 @@ export async function createFilter(chatId: string, filter: IFIlter): Promise<IFI
   logger.info(`chatId: ${chatId}`);
   logger.info(`filter: ${JSON.stringify(filter)}`);
 
-  const userFilters = await getFilters(chatId);
+  const { Count } = await getFilters(chatId);
 
-  if (userFilters.length >= FILTERS_MAX_COUNT) {
+  if (typeof Count === 'number' && Count >= FILTERS_MAX_COUNT) {
     throw new Error('Maximum number of filters has been reached');
   }
 
-  const isNameAlreadyUsed = !!userFilters.filter((f: IFIlter) => f.filterName === filter.filterName)
-    .length;
+  const { filterName } = filter;
+  const createdAt = new Date().toISOString();
+  const Item: IFIlterRaw = {
+    chatId,
+    filterName,
+    filter,
+    createdAt,
+    updatedAt: createdAt,
+  };
 
-  if (isNameAlreadyUsed) {
-    throw new Error(`"${filter.filterName}" name is already used`);
+  try {
+    await DynamoDB_Put({
+      TableName: TABLES.TelegramUserFilters,
+      Item,
+      ConditionExpression: 'filterName <> :filtername',
+      ExpressionAttributeValues: {
+        ':filtername': filterName,
+      },
+    });
+  } catch (error) {
+    if (error.toString().indexOf('conditional') > -1) {
+      throw new Error(`"${filter.filterName}" name is already used`);
+    } else {
+      logger.error(error.message);
+      throw error;
+    }
   }
 
   return filter;
 }
 
-export async function updateFilterById(
-  chatId: string,
-  filterName: string,
-  newFilter: Omit<IFIlter, 'filterName'>
-): Promise<IFIlter> {
+export async function updateFilterById(chatId: string, updatedFilter: IFIlter): Promise<IFIlter> {
   logger.info(`updateFilterById`);
   logger.info(`chatId: ${chatId}`);
-  logger.info(`filterName: ${filterName}`);
-  logger.info(`newFilter: ${JSON.stringify(newFilter)}`);
+  logger.info(`updatedFilter: ${JSON.stringify(updatedFilter)}`);
 
-  const currentFilter = await getFilterById(chatId, filterName);
+  const { filterName } = updatedFilter;
 
-  if (!currentFilter) {
-    throw new Error(`"${filterName}" filter doesn't exist!`);
+  try {
+    const { Attributes } = await DynamoDB_Update({
+      TableName: TABLES.TelegramUserFilters,
+      Key: { chatId, filterName },
+      UpdateExpression: `set updatedAt = :updatedAt, #fl = :updatedFl`,
+      ConditionExpression: 'filterName = :filtername',
+      ExpressionAttributeNames: {
+        '#fl': 'filter',
+      },
+      ExpressionAttributeValues: {
+        ':filtername': filterName,
+        ':updatedFl': updatedFilter,
+        ':updatedAt': new Date().toISOString(),
+      },
+      ReturnValues: 'ALL_NEW',
+    });
+
+    return Attributes as IFIlterRaw;
+  } catch (error) {
+    if (error.toString().indexOf('conditional') > -1) {
+      throw new ItemNotFoundError(`item not found for key: ${filterName}`);
+    } else {
+      logger.error(error.message);
+      throw error;
+    }
   }
-
-  const updatedFilter: IFIlter = {
-    ...currentFilter,
-    ...(newFilter as IFIlter),
-  };
-
-  return updatedFilter;
 }
 
-export async function deleteFilterById(chatId: string, filterName: string): Promise<IFIlter> {
+export async function deleteFilterById(chatId: string, filterName: string): Promise<IFIlterRaw> {
   logger.info(`deleteFilterById`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`filterName: ${filterName}`);
 
-  const currentFilter = await getFilterById(chatId, filterName);
+  try {
+    const { Attributes } = await DynamoDB_Delete({
+      TableName: TABLES.TelegramUserFilters,
+      Key: { chatId, filterName },
+      ReturnValues: 'ALL_OLD',
+    });
 
-  if (!currentFilter) {
-    throw new Error(`"${filterName}" filter doesn't exist!`);
+    if (!Attributes) {
+      throw new ItemNotFoundError(`item not found for key: ${filterName}`);
+    }
+
+    return Attributes as IFIlterRaw;
+  } catch (error) {
+    if (!(error instanceof ItemNotFoundError)) {
+      logger.error(error.message);
+    }
+
+    throw error;
   }
-
-  return currentFilter;
 }

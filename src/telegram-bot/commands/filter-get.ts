@@ -1,21 +1,27 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
 import { filterToString } from 'utils/converters/filter';
-import { getFilterById, IFIlter } from 'utils/filter';
+import { ItemNotFoundError } from 'utils/dynamodb';
+import { getFilterById } from 'utils/filter';
 import { Argv } from 'yargs';
 
 const COMMAND = ['filter-get', 'fg'];
 const DESCRIPTION = 'Get filter by name';
 const EXAMPLE = 'filter-get -n filterName';
 
+const ERROR_MESSAGE = 'Some error occurred during getting the filter.';
+
 function buildGetFilterById<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
     const filterName = argv.name as string;
-    const filter: IFIlter | undefined = await getFilterById(chatId, filterName);
-
-    if (filter) {
+    try {
+      const { filter } = await getFilterById(chatId, filterName);
       argv.respond(filterToString(filter));
-    } else {
-      argv.respond(`"${filterName}" filter doesn't exist!`);
+    } catch (error) {
+      if (error instanceof ItemNotFoundError) {
+        argv.respond(`"${filterName}" filter doesn't exist!`);
+      } else {
+        argv.respond(error?.message || ERROR_MESSAGE);
+      }
     }
   };
 }

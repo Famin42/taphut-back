@@ -1,5 +1,6 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
 import { filterToString } from 'utils/converters/filter';
+import { ItemNotFoundError } from 'utils/dynamodb';
 import { deleteFilterById } from 'utils/filter';
 import { Argv } from 'yargs';
 
@@ -11,16 +12,20 @@ const ERROR_MESSAGE = 'Some error occurred during deleting the filter.';
 
 function buildDeleteFilterById<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
+    const filterName = argv.name as string;
+
     try {
-      const filterName = argv.name as string;
-      const filter = await deleteFilterById(chatId, filterName);
+      const { filter } = await deleteFilterById(chatId, filterName);
 
       const msg = filterToString(filter, `Filter "${filterName}" is deleted successfully.\n`);
 
       argv.respond(msg);
     } catch (error) {
-      const errMsg = error?.message || ERROR_MESSAGE;
-      argv.respond(errMsg);
+      if (error instanceof ItemNotFoundError) {
+        argv.respond(`"${filterName}" filter doesn't exist!`);
+      } else {
+        argv.respond(error?.message || ERROR_MESSAGE);
+      }
     }
   };
 }
