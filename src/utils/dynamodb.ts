@@ -4,6 +4,10 @@ import { PromiseResult } from 'aws-sdk/lib/request';
 
 import { newErrorType } from 'utils/errors';
 import { eachLimit } from 'utils/async';
+import logger from './logger';
+
+export const ItemNotFoundError = newErrorType('ItemNotFoundError');
+export const AttrNotFoundError = newErrorType('AttrNotFoundError');
 
 function isOffline() {
   return !!process.env.DYNAMODB_ENDPOINT;
@@ -15,32 +19,17 @@ const options = isOffline()
       endpoint: process.env.DYNAMODB_ENDPOINT,
       apiVersion: '2012-08-10',
     }
-  : { apiVersion: '2012-08-10' };
+  : { apiVersion: '2012-08-10', region: 'us-east-1' };
 
-export const dynamodb = {
+const dynamodb = {
   doc: new DynamoDB.DocumentClient(options),
   db: new DynamoDB(options),
 };
 
-/**
- * Helper to convert a list of items to a list of dynamodb put operations
- * @param {string} tableName table to generate puts for
- * @param {Array} items items to put into table
- * @param {string} conditionExpression condition that must be true for write to go through
- * @returns {Array} array of put operations that can be passed to dynamodb
- */
-export function itemsToDynamoPuts<T>(
-  tableName: string,
-  items: T[],
-  conditionExpression?: string
-): DynamoDB.DocumentClient.PutItemInput[] {
-  return items.map(
-    (item): DynamoDB.DocumentClient.PutItemInput => ({
-      TableName: tableName,
-      Item: item,
-      ConditionExpression: conditionExpression,
-    })
-  );
+interface IParallelPutItems<T>
+  extends Pick<DynamoDB.DocumentClient.PutItemInput, 'TableName' | 'ConditionExpression'> {
+  Items: T[];
+  parallelism?: number;
 }
 
 /**
@@ -52,19 +41,50 @@ export function itemsToDynamoPuts<T>(
  * @param {string} conditionExpression condition that must be true for write to go through
  * @returns {Array} list of promises to put results
  */
-export function parallelPut<T>(
-  dbd: DynamoDB.DocumentClient,
-  items: T[],
-  table: string,
+export function DynamoDB_ParallelPut<T>({
+  Items,
   parallelism = 5,
-  conditionExpression?: string
-): Promise<PromiseResult<DynamoDB.DocumentClient.PutItemOutput, AWSError>[]> {
-  const putRequests = itemsToDynamoPuts(table, items, conditionExpression);
+  ...params
+}: IParallelPutItems<T>): Promise<
+  PromiseResult<DynamoDB.DocumentClient.PutItemOutput, AWSError>[]
+> {
+  const putRequests = Items.map((Item) => ({ Item, ...params }));
   return eachLimit(
     putRequests,
-    (item: DynamoDB.DocumentClient.PutItemInput) => dbd.put(item).promise(),
+    (
+      item: Pick<DynamoDB.DocumentClient.PutItemInput, 'TableName' | 'Item' | 'ConditionExpression'>
+    ) => DynamoDB_Put(item),
     parallelism
   );
+}
+
+/**
+ * A convenience wrapper around DynamoDB put
+ * Put a single item into table
+ * @param TableName
+ * @param Item
+ * @param ConditionExpression
+ 
+ */
+export async function DynamoDB_Put(
+  params: DynamoDB.DocumentClient.PutItemInput
+): Promise<PromiseResult<DynamoDB.DocumentClient.PutItemOutput, AWSError>> {
+  const result = await dynamodb.doc.put(params).promise();
+
+  if (result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.put"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not put into DynamoDB: ${JSON.stringify(params)}`);
+  }
+
+  return result;
+}
+
+interface IParallelDeleteParams {
+  Keys: DynamoDB.DocumentClient.Key[];
+  TableName: DynamoDB.DocumentClient.TableName;
+  parallelism?: number;
 }
 
 /**
@@ -74,25 +94,76 @@ export function parallelPut<T>(
  * @param {string} table table to delete from
  * @param {int} parallelism number of concurrent requests to execute at once
  */
-export function parallelDelete(
-  dbd: DynamoDB.DocumentClient,
-  keys: DynamoDB.DocumentClient.Key[],
-  table: string,
-  parallelism = 5
-): Promise<PromiseResult<DynamoDB.DocumentClient.DeleteItemOutput, AWSError>[]> {
-  const deletes = keys.map((k) => ({
-    TableName: table,
-    Key: k,
+export function DynamoDB_ParallelDelete({
+  Keys,
+  TableName,
+  parallelism = 5,
+}: IParallelDeleteParams): Promise<
+  PromiseResult<DynamoDB.DocumentClient.DeleteItemOutput, AWSError>[]
+> {
+  const deletes = Keys.map((Key) => ({
+    TableName,
+    Key,
   }));
   return eachLimit(
     deletes,
-    (d: DynamoDB.DocumentClient.DeleteItemInput) => dbd.delete(d).promise(),
+    (params: DynamoDB.DocumentClient.DeleteItemInput) => DynamoDB_Delete(params),
     parallelism
   );
 }
 
-export const ItemNotFoundError = newErrorType('ItemNotFoundError');
-export const AttrNotFoundError = newErrorType('AttrNotFoundError');
+/**
+ * A convenience wrapper around DynamoDB put
+ * Delete an item from table
+ * @param TableName
+ * @param Key
+ * @param ConditionExpression
+ * @param Expected
+ * @param ConditionalOperator
+ * @param ReturnConsumedCapacity
+ * @param ReturnItemCollectionMetrics
+ * @param ConditionExpression
+ * @param ExpressionAttributeNames
+ * @param ExpressionAttributeValues
+ * @param {string} ReturnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
+ */
+export async function DynamoDB_Delete(
+  params: DynamoDB.DocumentClient.DeleteItemInput
+): Promise<PromiseResult<DynamoDB.DocumentClient.DeleteItemOutput, AWSError>> {
+  const result = await dynamodb.doc.delete(params).promise();
+
+  if (result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.delete"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not delete from DynamoDB: ${JSON.stringify(params)}`);
+  }
+
+  return result;
+}
+
+type DynamoDBGetParams = Pick<DynamoDB.DocumentClient.GetItemInput, 'TableName' | 'Key'>;
+interface IParallelGetParams extends Pick<DynamoDB.DocumentClient.GetItemInput, 'TableName'> {
+  parallelism?: number;
+}
+
+/**
+ * get dynamodb items with a specified level of parallelism
+ * @param {Object[]} Keys keys to get
+ * @param {string} TableName table to get from
+ * @param {int} parallelism number of concurrent requests to execute at once
+ */
+export function DynamoDB_ParallelGet<T = unknown>(
+  Keys: DynamoDB.DocumentClient.Key[],
+  { parallelism = 5, ...options }: IParallelGetParams
+): Promise<T[]> {
+  const gets = Keys.map((Key) => ({
+    Key,
+    ...options,
+  }));
+  return eachLimit(gets, (params: DynamoDBGetParams) => DynamoDB_Get<T>(params), parallelism);
+}
 
 /**
  * Get a single item attribute, throw exception if item doesn't exist
@@ -100,291 +171,202 @@ export const AttrNotFoundError = newErrorType('AttrNotFoundError');
  * @param lookupKey
  * @returns {Promise<DynamoDB.DocumentClient.AttributeMap>}
  */
-export async function get(
-  table: string,
-  lookupKey: DynamoDB.DocumentClient.Key
-): Promise<DynamoDB.DocumentClient.AttributeMap> {
-  const getResult = await dynamodb.doc
-    .get({
-      TableName: table,
-      Key: lookupKey,
-    })
-    .promise();
+export async function DynamoDB_Get<T = unknown>(params: DynamoDBGetParams): Promise<T> {
+  const result = await dynamodb.doc.get(params).promise();
 
-  if (!getResult.Item) {
-    throw new ItemNotFoundError(`item not found for key: ${lookupKey}`);
+  if (!result.Item || result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.get"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(JSON.stringify(result));
+    throw new ItemNotFoundError(`item not found for key: ${params.Key}`);
   }
 
-  return getResult.Item;
-}
-
-interface IParallelGet {
-  table: string;
-  keys: DynamoDB.DocumentClient.Key[];
-  parallelism?: number;
-}
-
-/**
- * get dynamodb items with a specified level of parallelism
- * @param {Object[]} keys keys to get
- * @param {string} table table to get from
- * @param {int} parallelism number of concurrent requests to execute at once
- */
-export function parallelGet({
-  table,
-  keys,
-  parallelism = 5,
-}: IParallelGet): Promise<PromiseResult<DynamoDB.DocumentClient.GetItemOutput, AWSError>[]> {
-  const gets = keys.map((k) => ({
-    TableName: table,
-    Key: k,
-  }));
-  return eachLimit(
-    gets,
-    (getInput: DynamoDB.DocumentClient.GetItemInput) => dynamodb.doc.get(getInput).promise(),
-    parallelism
-  );
-}
-
-interface IParallelUpdate {
-  table: string;
-  keys: DynamoDB.DocumentClient.Key[];
-  updateExpression: string;
-  expressionAttributeNames: {
-    [key: string]: DynamoDB.DocumentClient.AttributeName;
-  };
-  expressionAttributeValues: {
-    [key: string]: DynamoDB.DocumentClient.AttributeValue;
-  };
-  conditionExpression?: string;
-  returnValues?: string;
-  parallelism?: number;
-}
-
-/**
- * get dynamodb items with a specified level of parallelism
- * @param {string} table table to update
- * @param {Object[]} keys keys to update
- * @param {string} updateExpression expression like 'set #a = :x + :y'
- * @param {Object} expressionAttributeNames map from names to field names ({"#x": "X"})
- * @param {Object} expressionAttributeValues map from names to values ({":x": 42})
- * @param {string} conditionExpression condition that must be true for update to succeed
- * @param {string} returnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
- * @param {int} parallelism number of concurrent requests to execute at once
- */
-export function parallelUpdate({
-  table,
-  keys,
-  updateExpression,
-  expressionAttributeNames,
-  expressionAttributeValues,
-  conditionExpression,
-  returnValues,
-  parallelism = 5,
-}: IParallelUpdate): Promise<PromiseResult<DynamoDB.DocumentClient.UpdateItemOutput, AWSError>[]> {
-  const updates: DynamoDB.DocumentClient.UpdateItemInput[] = keys.map((k) => ({
-    TableName: table,
-    Key: k,
-    UpdateExpression: updateExpression,
-    ConditionExpression: conditionExpression,
-    ExpressionAttributeNames: expressionAttributeNames,
-    ExpressionAttributeValues: expressionAttributeValues,
-    ReturnValues: returnValues,
-  }));
-  return eachLimit(
-    updates,
-    (updateInput: DynamoDB.DocumentClient.GetItemInput) =>
-      dynamodb.doc.update(updateInput).promise(),
-    parallelism
-  );
+  return result.Item as T;
 }
 
 /**
  * Get a single item attribute, throw exception if item of att don't exist
- * @param {string} table
- * @param {DynamoDB.DocumentClient.Key} lookupKey
+ * @param {string} TableName
+ * @param {DynamoDB.DocumentClient.Key} Key
  * @param {string} attr
  * @returns {any} attribute value
  */
-export async function getAttr<T = unknown>(
-  table: string,
-  lookupKey: DynamoDB.DocumentClient.Key,
+export async function DynamoDB_GetAttr<T = unknown>(
+  TableName: string,
+  Key: DynamoDB.DocumentClient.Key,
   attr: string
 ): Promise<T> {
-  const getResult = await dynamodb.doc
+  const result = await dynamodb.doc
     .get({
-      TableName: table,
-      Key: lookupKey,
+      TableName,
+      Key,
     })
     .promise();
 
-  if (!getResult.Item) {
-    throw new ItemNotFoundError(`item not found for key: ${lookupKey}`);
+  if (!result.Item || result?.$response?.error) {
+    logger.error(`params: ${JSON.stringify({ TableName, Key })}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new ItemNotFoundError(`item not found for key: ${Key}`);
   }
 
-  if (!(attr in getResult.Item)) {
-    throw new AttrNotFoundError(`attribute ${attr} not found for item with key ${lookupKey}`);
+  if (!(attr in result.Item)) {
+    throw new AttrNotFoundError(`attribute ${attr} not found for item with key ${Key}`);
   }
 
-  return getResult.Item[attr];
+  return result.Item[attr];
 }
 
-interface IBasicQuery {
-  table: string;
-  index?: string;
-  keyExpression: string;
-  expressionAttributeValues: { [key: string]: any };
-  expressionAttributeNames?: { [key: string]: any };
-  limit?: number;
+interface IParallelUpdate extends Omit<DynamoDB.DocumentClient.UpdateItemInput, 'Key'> {
+  parallelism?: number;
 }
 
-export interface IQueryResults {
-  items: DynamoDB.DocumentClient.AttributeMap[];
-  lastEvaluatedKey: DynamoDB.DocumentClient.Key | undefined;
+/**
+ * get dynamodb items with a specified level of parallelism
+ * @param {Object[]} keys keys to update
+ * @param TableName
+ * @param AttributeUpdates
+ * @param Expected
+ * @param ReturnConsumedCapacity
+ * @param ReturnItemCollectionMetrics
+ * @param {string} UpdateExpression  expression like 'set #a = :x + :y'
+ * @param {string} ConditionExpression condition that must be true for update to succeed
+ * @param {Object} ExpressionAttributeNames map from names to field names ({"#x": "X"})
+ * @param {Object} ExpressionAttributeValues map from names to values ({":x": 42})
+ * @param {string} ReturnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
+ * @param {int} parallelism number of concurrent requests to execute at once
+ */
+export function DynamoDB_ParallelUpdate(
+  keys: DynamoDB.DocumentClient.Key[],
+  { parallelism = 5, ...options }: IParallelUpdate
+): Promise<PromiseResult<DynamoDB.DocumentClient.UpdateItemOutput, AWSError>[]> {
+  const updates: DynamoDB.DocumentClient.UpdateItemInput[] = keys.map((k) => ({
+    Key: k,
+    ...options,
+  }));
+  return eachLimit(
+    updates,
+    (updateInput: DynamoDB.DocumentClient.UpdateItemInput) => DynamoDB_Update(updateInput),
+    parallelism
+  );
+}
+
+/**
+ *  Update Item at table
+ * @param TableName
+ * @param Key
+ * @param AttributeUpdates
+ * @param Expected
+ * @param ConditionalOperator
+ * @param ReturnConsumedCapacity
+ * @param ReturnItemCollectionMetrics
+ * @param UpdateExpression
+ * @param ConditionExpression
+ * @param ExpressionAttributeNames
+ * @param ExpressionAttributeValues
+ * @param {string} ReturnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
+ */
+export async function DynamoDB_Update(
+  params: DynamoDB.DocumentClient.UpdateItemInput
+): Promise<PromiseResult<DynamoDB.DocumentClient.UpdateItemOutput, AWSError>> {
+  const result = await dynamodb.doc.update(params).promise();
+
+  if (result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.update"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not query DynamoDB: ${JSON.stringify(params)}`);
+  }
+
+  return result;
+}
+
+export interface IQueryResult<T> extends Omit<DynamoDB.DocumentClient.QueryOutput, 'Item'> {
+  Items: T[];
 }
 
 /**
  * A convenience wrapper around DynamoDB query exposing the more common options
- * @param params params
- * @param params.table table to query
- * @param params.keyExpression query using this key expression
- * @param params.expressionAttributeValues values of attributes used in keyExpression
+ * @param TableName
+ * @param IndexName
+ * @param Select
+ * @param AttributesToGet
+ * @param Limit
+ * @param ConsistentRead
+ * @param KeyConditions
+ * @param QueryFilter
+ * @param ConditionalOperator
+ * @param ScanIndexForward
+ * @param ExclusiveStartKey
+ * @param ReturnConsumedCapacity
+ * @param ProjectionExpression
+ * @param FilterExpression
+ * @param KeyConditionExpression
+ * @param ExpressionAttributeNames
+ * @param ExpressionAttributeValues
  * @returns query results
  */
-export async function query({
-  table,
-  index,
-  keyExpression,
-  expressionAttributeValues,
-  expressionAttributeNames,
-  limit,
-}: IBasicQuery): Promise<IQueryResults> {
-  const queryParams = {
-    TableName: table,
-    IndexName: index,
-    KeyConditionExpression: keyExpression,
-    ExpressionAttributeValues: expressionAttributeValues,
-    ExpressionAttributeNames: expressionAttributeNames,
-    Limit: limit,
-  };
-  const result = await dynamodb.doc.query(queryParams).promise();
-  if (result.Items === undefined) {
-    throw new Error(`Could not query DynamoDB: ${JSON.stringify(queryParams)}`);
+export async function DynamoDB_Query(
+  params: DynamoDB.DocumentClient.QueryInput
+): Promise<PromiseResult<DynamoDB.DocumentClient.QueryOutput, AWSError>> {
+  const result = await dynamodb.doc.query(params).promise();
+
+  if (result.Items === undefined || result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.query"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not query DynamoDB: ${JSON.stringify(params)}`);
   }
-  return {
-    items: result.Items,
-    lastEvaluatedKey: result.LastEvaluatedKey,
-  };
+
+  return result;
 }
 
-interface IBasicScan {
-  table: string;
+interface IBasicScan extends Omit<DynamoDB.DocumentClient.ScanInput, 'ProjectionExpression'> {
   fields?: string[];
-  filterExpression?: string;
-  expressionAttributeNames?: { [key: string]: string };
-  expressionAttributeValues?: { [key: string]: any };
-  exclusiveStartKey?: DynamoDB.DocumentClient.Key;
-  consistentRead?: boolean;
-}
-
-export interface IScanResults {
-  items: DynamoDB.DocumentClient.AttributeMap[];
-  lastEvaluatedKey: DynamoDB.DocumentClient.Key | undefined;
 }
 
 /**
  * A convenience wrapper around DynamoDB scan exposing the more common options
  * @param params params
- * @param params.table table to scan
- * @param params.fields return only these fields
- * @param params.filterExpression filter rows with this expression
- * @param params.expressionAttributeNames names of attributes used in filterExpression
- * @param params.expressionAttributeValues values of attributes used in filterExpression
- * @param params.exclusiveStartKey start scanning from this key
+ * @param params.fields string array of field which should be returned
+ * @param TableName
+ * @param IndexName
+ * @param AttributesToGet
+ * @param Limit
+ * @param Select
+ * @param ScanFilter
+ * @param ConditionalOperator
+ * @param ExclusiveStartKey
+ * @param ReturnConsumedCapacity
+ * @param TotalSegments
+ * @param Segment
+ * @param ProjectionExpression
+ * @param FilterExpression
+ * @param ExpressionAttributeNames
+ * @param ExpressionAttributeValues
+ * @param ConsistentRead
  * @returns scan results
  */
-export async function scan({
-  table,
+export async function DynamoDB_Scan({
   fields,
-  filterExpression,
-  expressionAttributeNames,
-  expressionAttributeValues,
-  exclusiveStartKey,
-  consistentRead,
-}: IBasicScan): Promise<IScanResults> {
+  ...options
+}: IBasicScan): Promise<PromiseResult<DynamoDB.DocumentClient.ScanOutput, AWSError>> {
   const ProjectionExpression = fields ? fields.join(', ') : undefined;
-  const scanParams = {
-    TableName: table,
+  const params = {
+    ...options,
     ProjectionExpression,
-    FilterExpression: filterExpression,
-    ExpressionAttributeNames: expressionAttributeNames,
-    ExpressionAttributeValues: expressionAttributeValues,
-    ExclusiveStartKey: exclusiveStartKey,
-    ConsistentRead: consistentRead,
   };
-  const result = await dynamodb.doc.scan(scanParams).promise();
-  if (result.Items === undefined) {
-    throw new Error(`Could not scan DynamoDB: ${JSON.stringify(scanParams)}`);
+  const result = await dynamodb.doc.scan(params).promise();
+
+  if (result.Items === undefined || result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.scan"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not scan DynamoDB: ${JSON.stringify(params)}`);
   }
-  return {
-    items: result.Items,
-    lastEvaluatedKey: result.LastEvaluatedKey,
-  };
-}
 
-interface IPutArgs {
-  table: string;
-  item: any;
-  conditionExpression?: string;
-}
-
-/**
- * A convenience wrapper around DynamoDB put
- * Put a single item into table
- * @param table
- * @param item
- * @param conditionExpression
- */
-export function put({
-  table,
-  item,
-  conditionExpression,
-}: IPutArgs): Promise<PromiseResult<DynamoDB.DocumentClient.PutItemOutput, AWSError>> {
-  return dynamodb.doc
-    .put({
-      TableName: table,
-      Item: item,
-      ConditionExpression: conditionExpression,
-    })
-    .promise();
-}
-
-interface IDelArgs {
-  table: string;
-  key: any;
-  conditionExpression?: string;
-}
-
-/**
- * A convenience wrapper around DynamoDB delete
- * Delete a single key from table
- * @param table
- * @param key
- * @param conditionExpression
- */
-export function del({
-  table,
-  key,
-  conditionExpression,
-}: IDelArgs): Promise<PromiseResult<DynamoDB.DocumentClient.DeleteItemOutput, AWSError>> {
-  return dynamodb.doc
-    .delete({
-      TableName: table,
-      Key: key,
-      ConditionExpression: conditionExpression,
-    })
-    .promise();
+  return result;
 }
 
 /**
@@ -393,37 +375,51 @@ export function del({
  * @param backupName name of backup to create
  * @returns details about the backup
  */
-export async function createTableBackup({
+export async function DynamoDB_CreateTableBackup({
   tableName,
   backupName,
 }: {
   tableName: string;
   backupName: string;
 }): Promise<DynamoDB.DocumentClient.BackupDetails> {
-  const res = await dynamodb.db
+  const result = await dynamodb.db
     .createBackup({
       TableName: tableName,
       BackupName: backupName,
     })
     .promise();
-  if (!res.BackupDetails) {
+
+  if (!result.BackupDetails || result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.db.createBackup"`);
+    logger.error(`creatBackup failed for table ${tableName} / ${backupName}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
     throw Error(`creatBackup failed for table ${tableName} / ${backupName}`);
   }
-  return res.BackupDetails;
+
+  return result.BackupDetails;
 }
 
 /**
  * delete a Dynamodb table backup
  * @param backupArn ARN of backup to delete
  */
-export function deleteTableBackup(
+export async function DynamoDB_DeleteTableBackup(
   backupArn: string
 ): Promise<PromiseResult<DynamoDB.DeleteBackupOutput, AWSError>> {
-  return dynamodb.db
+  const result = await dynamodb.db
     .deleteBackup({
       BackupArn: backupArn,
     })
     .promise();
+
+  if (result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.db.deleteBackup"`);
+    logger.error(`BackupArn: ${backupArn}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw Error(`BackupArn: ${backupArn}`);
+  }
+
+  return result;
 }
 
 /**
@@ -431,18 +427,23 @@ export function deleteTableBackup(
  * @param tableName table to get backups for
  * @returns list of backups for a table
  */
-export async function listTableBackups(
+export async function DynamoDB_ListTableBackups(
   tableName: string
 ): Promise<DynamoDB.DocumentClient.BackupSummaries> {
-  const backups = await dynamodb.db
+  const result = await dynamodb.db
     .listBackups({
       TableName: tableName,
     })
     .promise();
-  if (!backups.BackupSummaries) {
+
+  if (!result.BackupSummaries || result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.db.listBackups"`);
+    logger.error(`listBackups failed for table ${tableName}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
     throw Error(`listBackups failed for table ${tableName}`);
   }
-  return backups.BackupSummaries;
+
+  return result.BackupSummaries;
 }
 
 function notEmpty(v: unknown): boolean {
@@ -457,11 +458,11 @@ function notEmpty(v: unknown): boolean {
  * @param obj row object to clean
  * @returns {object} object with no empty values with its keys
  */
-export function cleanObj(obj: Record<string, unknown>): Record<string, unknown> {
+export function DynamoDB_CleanObj(obj: Record<string, unknown>): Record<string, unknown> {
   // remove empty values
   const cleanRow = mapValues(obj, (value) => {
     if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-      return cleanObj(value as Record<string, unknown>);
+      return DynamoDB_CleanObj(value as Record<string, unknown>);
     }
     return value;
   });
@@ -473,6 +474,6 @@ export function cleanObj(obj: Record<string, unknown>): Record<string, unknown> 
  * DynamoDB can't handle keys with empty values. Clean those out
  * @param {Array} rows rows to clean
  */
-export function cleanRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
-  return rows.map(cleanObj);
+export function DynamoDB_cleanRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  return rows.map(DynamoDB_CleanObj);
 }
