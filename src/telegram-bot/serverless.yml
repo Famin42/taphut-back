@@ -1,6 +1,6 @@
 # serverless.yml
 
-service: taphut
+service: telegram-bot
 
 frameworkVersion: '2'
 
@@ -44,7 +44,7 @@ provider:
         - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/TelegramUserFilters'
 
 functions:
-  hello:
+  webhook:
     handler: webhook.handler
     description: Taphut telegram-bot webhook
     memorySize: 256

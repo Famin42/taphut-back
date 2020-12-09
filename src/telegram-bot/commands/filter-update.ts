@@ -23,7 +23,7 @@ function buildUpdateFilterById<O extends CustomExtend>(chatId: string): CustomAr
         roomsNumber: rooms as number | undefined,
       };
 
-      const filter = await updateFilterById(chatId, updatedFilter);
+      const { filter } = await updateFilterById(chatId, updatedFilter);
 
       const msg = filterToString(filter, `Filter "${name as string}" is updated successfully.\n`);
 

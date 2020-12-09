@@ -37,7 +37,7 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
     return httpError(500, 'Smth went wrong');
   }
 
-  const chat_id = message?.chat?.id;
+  const chat_id = message?.chat?.id?.toString();
   const { text: stringCommand } = message;
 
   if (!chat_id) {
@@ -46,6 +46,7 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
   }
 
   logger.info(`Build Parser`);
+
   const parser = buildParser({ chatId: chat_id, token });
   parser(stringCommand);
 

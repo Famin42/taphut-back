@@ -19,7 +19,7 @@ const options = isOffline()
       endpoint: process.env.DYNAMODB_ENDPOINT,
       apiVersion: '2012-08-10',
     }
-  : { apiVersion: '2012-08-10', region: 'us-east-1' };
+  : { apiVersion: '2012-08-10' };
 
 const dynamodb = {
   doc: new DynamoDB.DocumentClient(options),

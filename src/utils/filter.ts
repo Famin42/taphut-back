@@ -104,7 +104,10 @@ export async function createFilter(chatId: string, filter: IFIlter): Promise<IFI
   return filter;
 }
 
-export async function updateFilterById(chatId: string, updatedFilter: IFIlter): Promise<IFIlter> {
+export async function updateFilterById(
+  chatId: string,
+  updatedFilter: IFIlter
+): Promise<IFIlterRaw> {
   logger.info(`updateFilterById`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`updatedFilter: ${JSON.stringify(updatedFilter)}`);

@@ -6,7 +6,7 @@ import { mustEnv } from 'utils/env';
 
 setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
-const newEndpoint = 'https://t2jlu0s9gh.execute-api.us-east-1.amazonaws.com/dev/bot-api';
+const newEndpoint = 'newEndpoint';
 const token = mustEnv('TG_BOT_TOKEN');
 
 const uri = new URL(`${getTelegramBaseURL(token)}/setWebhook?${stringify({ url: newEndpoint })}`);
