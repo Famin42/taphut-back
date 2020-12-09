@@ -1,16 +1,23 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
 import { filtersToString } from 'utils/converters/filter';
-import { getFilters } from 'utils/filter';
+import { getFilters, IFIlterRaw } from 'utils/filter';
 import { Argv } from 'yargs';
 
 const COMMAND = ['filter-list', 'fl'];
 const DESCRIPTION = 'List all filters';
 
+const ERROR_MESSAGE = 'Some error occurred during getting filters.';
+
 function buildGetFiltersByChatId<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
-    const filters: any = await getFilters(chatId);
-    const msg = filtersToString(filters);
-    argv.respond(msg);
+    try {
+      const { Items } = await getFilters(chatId);
+      const filters = Items.map((f: IFIlterRaw) => f.filter);
+      const msg = filtersToString(filters);
+      argv.respond(msg);
+    } catch (error) {
+      argv.respond(error?.message || ERROR_MESSAGE);
+    }
   };
 }
 

@@ -125,8 +125,7 @@ export function DynamoDB_ParallelDelete({
  * @param ConditionExpression
  * @param ExpressionAttributeNames
  * @param ExpressionAttributeValues
- * @param {string} ReturnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
+ * @param {string} ReturnValues "NONE"|"ALL_OLD"|"UPDATED_OLD"|"ALL_NEW"|"UPDATED_NEW"|string
  */
 export async function DynamoDB_Delete(
   params: DynamoDB.DocumentClient.DeleteItemInput
@@ -167,8 +166,8 @@ export function DynamoDB_ParallelGet<T = unknown>(
 
 /**
  * Get a single item attribute, throw exception if item doesn't exist
- * @param {string} table
- * @param lookupKey
+ * @param TableName
+ * @param Key
  * @returns {Promise<DynamoDB.DocumentClient.AttributeMap>}
  */
 export async function DynamoDB_Get<T = unknown>(params: DynamoDBGetParams): Promise<T> {
@@ -232,8 +231,7 @@ interface IParallelUpdate extends Omit<DynamoDB.DocumentClient.UpdateItemInput, 
  * @param {string} ConditionExpression condition that must be true for update to succeed
  * @param {Object} ExpressionAttributeNames map from names to field names ({"#x": "X"})
  * @param {Object} ExpressionAttributeValues map from names to values ({":x": 42})
- * @param {string} ReturnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
+ * @param {string} ReturnValues "NONE"|"ALL_OLD"|"UPDATED_OLD"|"ALL_NEW"|"UPDATED_NEW"|string
  * @param {int} parallelism number of concurrent requests to execute at once
  */
 export function DynamoDB_ParallelUpdate(
@@ -264,8 +262,7 @@ export function DynamoDB_ParallelUpdate(
  * @param ConditionExpression
  * @param ExpressionAttributeNames
  * @param ExpressionAttributeValues
- * @param {string} ReturnValues "NONE", "ALL_OLD", "ALL_NEW", etc...: what to return:
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#update-property
+ * @param {string} ReturnValues "NONE"|"ALL_OLD"|"UPDATED_OLD"|"ALL_NEW"|"UPDATED_NEW"|string
  */
 export async function DynamoDB_Update(
   params: DynamoDB.DocumentClient.UpdateItemInput
@@ -283,6 +280,10 @@ export async function DynamoDB_Update(
 }
 
 export interface IQueryResult<T> extends Omit<DynamoDB.DocumentClient.QueryOutput, 'Item'> {
+  Items: T[];
+}
+
+export interface IQueryOutput<T> extends Omit<DynamoDB.DocumentClient.QueryOutput, 'Items'> {
   Items: T[];
 }
 
@@ -307,9 +308,9 @@ export interface IQueryResult<T> extends Omit<DynamoDB.DocumentClient.QueryOutpu
  * @param ExpressionAttributeValues
  * @returns query results
  */
-export async function DynamoDB_Query(
+export async function DynamoDB_Query<T = unknown>(
   params: DynamoDB.DocumentClient.QueryInput
-): Promise<PromiseResult<DynamoDB.DocumentClient.QueryOutput, AWSError>> {
+): Promise<IQueryOutput<T>> {
   const result = await dynamodb.doc.query(params).promise();
 
   if (result.Items === undefined || result?.$response?.error) {
@@ -319,7 +320,10 @@ export async function DynamoDB_Query(
     throw new Error(`Could not query DynamoDB: ${JSON.stringify(params)}`);
   }
 
-  return result;
+  return {
+    ...result,
+    Items: result.Items as T[],
+  };
 }
 
 interface IBasicScan extends Omit<DynamoDB.DocumentClient.ScanInput, 'ProjectionExpression'> {

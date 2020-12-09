@@ -2,6 +2,7 @@ import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 
 import { Currency, IFIlter, updateFilterById } from 'utils/filter';
 import { filterToString } from 'utils/converters/filter';
 import { Argv } from 'yargs';
+import { ItemNotFoundError } from 'utils/dynamodb';
 
 const COMMAND = ['filter-update', 'fu'];
 const DESCRIPTION = 'Update filter';
@@ -11,10 +12,10 @@ const ERROR_MESSAGE = 'Some error occurred during deleting the filter.';
 
 function buildUpdateFilterById<O extends CustomExtend>(chatId: string): CustomArgvHandler<O> {
   return async (argv: CustomArgv<O>) => {
+    const { name, city, currency, min, max, rooms } = argv;
     try {
-      const { name, city, currency, min, max, rooms } = argv;
-
-      const newFilter: Omit<IFIlter, 'filterName'> = {
+      const updatedFilter: IFIlter = {
+        filterName: name as string,
         city: city as string | undefined,
         currency: currency as Currency,
         minPrice: min as number | undefined,
@@ -22,14 +23,17 @@ function buildUpdateFilterById<O extends CustomExtend>(chatId: string): CustomAr
         roomsNumber: rooms as number | undefined,
       };
 
-      const filter = await updateFilterById(chatId, name as string, newFilter);
+      const filter = await updateFilterById(chatId, updatedFilter);
 
       const msg = filterToString(filter, `Filter "${name as string}" is updated successfully.\n`);
 
       argv.respond(msg);
     } catch (error) {
-      const errMsg = error?.message || ERROR_MESSAGE;
-      argv.respond(errMsg);
+      if (error instanceof ItemNotFoundError) {
+        argv.respond(`"${name}" filter doesn't exist!`);
+      } else {
+        argv.respond(error?.message || ERROR_MESSAGE);
+      }
     }
   };
 }
