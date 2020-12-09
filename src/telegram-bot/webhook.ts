@@ -33,6 +33,7 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
       return httpSuccess();
     }
   } catch (error) {
+    logger.error(error.message);
     return httpError(500, 'Smth went wrong');
   }
 
