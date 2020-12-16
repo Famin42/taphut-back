@@ -30,7 +30,7 @@ resource "aws_dynamodb_table" "OnlinerApartment" {
 
   attribute {
     name = "id"
-    type = "S"
+    type = "N"
   }
 
   attribute {
