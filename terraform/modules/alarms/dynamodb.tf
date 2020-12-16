@@ -4,6 +4,7 @@ variable "tables" {
 
   default = [
     "TelegramUserFilters",
+    "OnlinerApartment"
   ]
 }
 
