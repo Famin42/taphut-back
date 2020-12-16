@@ -1,0 +1,49 @@
+# serverless.yml
+
+service: onliner-crawler
+
+frameworkVersion: '2'
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-aws-alerts
+
+provider:
+  name: aws
+  endpointType: regional
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    USER_POOL_ID: ${env:USER_POOL_ID}
+  iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
+    - Effect: 'Allow'
+      Action:
+        - dynamodb:Scan
+        - dynamodb:PutItem
+      Resource:
+        - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/OnlinerApartment'
+
+functions:
+  onliner-crawler:
+    handler: onliner-crawler.handler
+    description: Taphut telegram-bot webhook
+    memorySize: 512
+    timeout: 60
+    events:
+      - schedule:
+          name: onliner-crawler-event
+          description: 'Run the Onliner Crawler to fetch data from Onliner'
+          rate: rate(1 hour)
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  webpack: ${file(../../serverless/globals.yml):webpack}
+  alerts: ${file(../../serverless/globals.yml):alerts}
+
+# Modes for config validation. The default is warn.
+# `error` throws an exception,
+# `warn` logs error to console,
+# `off` disables validation at all.
+configValidationMode: error

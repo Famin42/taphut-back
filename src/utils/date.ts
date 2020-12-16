@@ -4,6 +4,14 @@ export function getUnixTimeInSeconds(d = new Date()): number {
   return Math.floor(d.getTime() / 1000);
 }
 
+export function increaseDate(
+  increaseDate: moment.DurationInputArg1,
+  dateType: moment.DurationInputArg2,
+  date = new Date()
+): Date {
+  return moment(date).add(increaseDate, dateType).toDate();
+}
+
 /**
  * get minute of day for a date
  * @param {Date} date
