@@ -1,4 +1,4 @@
-import { TABLES } from 'constants/tables';
+import { TABLES } from 'utils/consts';
 import logger, { setDebugLevel } from 'utils/logger';
 import {
   DynamoDB_Query,
