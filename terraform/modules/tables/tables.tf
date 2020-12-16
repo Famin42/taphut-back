@@ -33,19 +33,6 @@ resource "aws_dynamodb_table" "OnlinerApartment" {
     type = "N"
   }
 
-  attribute {
-    name = "status"
-    type = "S"
-  }
-
-  global_secondary_index {
-    name            = "StatusIndex"
-    hash_key        = "status"
-    write_capacity  = 0
-    read_capacity   = 0
-    projection_type = "ALL"
-  }
-
   ttl {
     attribute_name = "expirationTime"
     enabled        = true
