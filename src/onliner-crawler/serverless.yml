@@ -35,7 +35,7 @@ functions:
       - schedule:
           name: onliner-crawler-event
           description: 'Run the Onliner Crawler to fetch data from Onliner'
-          rate: rate(1 hour)
+          rate: rate(15 minutes)
 
 custom:
   accountId: '${env:AWS_ACCOUNT_ID}'
