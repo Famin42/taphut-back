@@ -48,7 +48,7 @@ functions:
     handler: webhook.handler
     description: Taphut telegram-bot webhook
     memorySize: 256
-    timeout: 5
+    timeout: 30
     events:
       - http:
           path: bot-api
