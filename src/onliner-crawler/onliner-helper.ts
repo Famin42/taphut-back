@@ -4,7 +4,7 @@ import { URL } from 'url';
 
 import { APARTMENTS_STORING_DURATION_IN_MONTHS, ONLINER_URI } from 'utils/consts';
 import { DynamoDB_ParallelPut, DynamoDB_Scan } from 'utils/dynamodb';
-import { IOnlinerApartment, IOnlinerApartmentRaw } from './model';
+import { IOnlinerApartment, IOnlinerApartmentRow } from './model';
 import { getUnixTimeInSeconds, increaseDate } from 'utils/date';
 import { DYNAMO_DB_SCAN_LIMIT } from './onliner-crawler';
 import { TABLES } from 'utils/consts';
@@ -29,7 +29,7 @@ export function formOnlnerURL({ page = 1, limit = 10 }: Partial<IOnlinerURLParam
   return uri;
 }
 
-export async function parallelPutOnlinerApartments(Items: IOnlinerApartmentRaw[]): Promise<any> {
+export async function parallelPutOnlinerApartments(Items: IOnlinerApartmentRow[]): Promise<any> {
   try {
     return await DynamoDB_ParallelPut({ Items, TableName: TABLES.OnlinerApartment });
   } catch (error) {
@@ -42,7 +42,7 @@ export async function parallelPutOnlinerApartments(Items: IOnlinerApartmentRaw[]
  * @param item item
  * @param status "NEW" | "IN_FLIGHT" | "ERROR" | "OLD"
  */
-export function convertToNewOnlinerApartmentRawItem(item: IOnlinerApartment): IOnlinerApartmentRaw {
+export function convertToNewOnlinerApartmentRowItem(item: IOnlinerApartment): IOnlinerApartmentRow {
   const expirationTime = getUnixTimeInSeconds(
     increaseDate(APARTMENTS_STORING_DURATION_IN_MONTHS, 'months')
   );
@@ -77,9 +77,9 @@ export async function filterOutOnlyNewValues(
 
     logger.info(`LastEvaluatedKey: ${JSON.stringify(data.LastEvaluatedKey)}`);
 
-    const onlinerAppointmetnsFromDynamo = (data.Items || []) as IOnlinerApartmentRaw[];
+    const onlinerAppointmetnsFromDynamo = (data.Items || []) as IOnlinerApartmentRow[];
 
-    onlinerAppointmetnsFromDynamo.forEach((item: IOnlinerApartmentRaw) => {
+    onlinerAppointmetnsFromDynamo.forEach((item: IOnlinerApartmentRow) => {
       if (onlinerData.has(item.id)) {
         onlinerData.delete(item.id);
       }

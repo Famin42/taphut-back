@@ -1,6 +1,6 @@
 # serverless.yml
 
-service: telegram-bot
+service: telegram-notifier
 
 frameworkVersion: '2'
 
@@ -18,14 +18,6 @@ provider:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     TG_BOT_TOKEN: '${ssm:/taphut/tg-bot-token~true}'
     USER_POOL_ID: ${env:USER_POOL_ID}
-  # List of API keys to be used by your service API Gateway REST API
-  # apiKeys:
-  #  - myFirstKey
-  #     value: myFirstKeyValue
-  #     description: myFirstKeyDescription
-  #     customerId: myFirstKeyCustomerId
-  #   - ${opt:stage}-myFirstKey
-  #   - ${env:MY_API_KEY} # you can hide it in a serverless variable
   iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
     - Effect: 'Allow'
       Action:
@@ -36,24 +28,28 @@ provider:
     - Effect: 'Allow'
       Action:
         - dynamodb:Query
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
+        - dynamodb:Scan
       Resource:
         - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/TelegramUserFilters'
+    - Effect: 'Allow'
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:UpdateItem
+      Resource:
+        - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/OnlinerApartment'
 
 functions:
-  webhook:
-    handler: webhook.handler
+  telegram-notifier:
+    handler: telegram-notifier.handler
     description: Taphut telegram-bot webhook
     memorySize: 256
-    timeout: 30
+    timeout: 5
     events:
-      - http:
-          path: bot-api
-          method: post
-          cors: true
+      - schedule:
+          name: telegram-notifier-event
+          description: 'Scan all users filters and search for suitable new appartment'
+          rate: rate(15 minutes)
 
 custom:
   accountId: '${env:AWS_ACCOUNT_ID}'
