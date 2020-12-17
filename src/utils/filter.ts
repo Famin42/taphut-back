@@ -14,7 +14,7 @@ setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
 const FILTERS_MAX_COUNT = 5;
 
-export type Currency = 'USD' | 'BYN' | 'EUR';
+export type Currency = 'USD' | 'BYN';
 
 export interface IFIlter {
   filterName: string;
@@ -25,7 +25,7 @@ export interface IFIlter {
   roomsNumber?: number;
 }
 
-export interface IFIlterRaw {
+export interface IFIlterRow {
   chatId: string;
   filterName: string;
   createdAt: string;
@@ -33,24 +33,24 @@ export interface IFIlterRaw {
   filter: IFIlter;
 }
 
-export async function getFilters(chatId: string): Promise<IQueryOutput<IFIlterRaw>> {
+export async function getFilters(chatId: string): Promise<IQueryOutput<IFIlterRow>> {
   logger.info(`getFiltersByChatId`);
   logger.info(`chatId: ${JSON.stringify(chatId)}`);
 
-  return await DynamoDB_Query<IFIlterRaw>({
+  return await DynamoDB_Query<IFIlterRow>({
     TableName: TABLES.TelegramUserFilters,
     KeyConditionExpression: 'chatId = :chatId',
     ExpressionAttributeValues: { ':chatId': chatId },
   });
 }
 
-export async function getFilterById(chatId: string, filterName: string): Promise<IFIlterRaw> {
+export async function getFilterById(chatId: string, filterName: string): Promise<IFIlterRow> {
   logger.info(`getFilterById`);
   logger.info(`chatId: ${chatId},`);
   logger.info(`filterName: ${JSON.stringify(filterName)}`);
 
   try {
-    return await DynamoDB_Get<IFIlterRaw>({
+    return await DynamoDB_Get<IFIlterRow>({
       TableName: TABLES.TelegramUserFilters,
       Key: { chatId, filterName },
     });
@@ -75,7 +75,7 @@ export async function createFilter(chatId: string, filter: IFIlter): Promise<IFI
 
   const { filterName } = filter;
   const createdAt = new Date().toISOString();
-  const Item: IFIlterRaw = {
+  const Item: IFIlterRow = {
     chatId,
     filterName,
     filter,
@@ -107,7 +107,7 @@ export async function createFilter(chatId: string, filter: IFIlter): Promise<IFI
 export async function updateFilterById(
   chatId: string,
   updatedFilter: IFIlter
-): Promise<IFIlterRaw> {
+): Promise<IFIlterRow> {
   logger.info(`updateFilterById`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`updatedFilter: ${JSON.stringify(updatedFilter)}`);
@@ -131,7 +131,7 @@ export async function updateFilterById(
       ReturnValues: 'ALL_NEW',
     });
 
-    return Attributes as IFIlterRaw;
+    return Attributes as IFIlterRow;
   } catch (error) {
     if (error.toString().indexOf('conditional') > -1) {
       throw new ItemNotFoundError(`item not found for key: ${filterName}`);
@@ -142,7 +142,7 @@ export async function updateFilterById(
   }
 }
 
-export async function deleteFilterById(chatId: string, filterName: string): Promise<IFIlterRaw> {
+export async function deleteFilterById(chatId: string, filterName: string): Promise<IFIlterRow> {
   logger.info(`deleteFilterById`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`filterName: ${filterName}`);
@@ -158,7 +158,7 @@ export async function deleteFilterById(chatId: string, filterName: string): Prom
       throw new ItemNotFoundError(`item not found for key: ${filterName}`);
     }
 
-    return Attributes as IFIlterRaw;
+    return Attributes as IFIlterRow;
   } catch (error) {
     if (!(error instanceof ItemNotFoundError)) {
       logger.error(error.message);

@@ -330,6 +330,34 @@ interface IBasicScan extends Omit<DynamoDB.DocumentClient.ScanInput, 'Projection
   fields?: string[];
 }
 
+export async function DynamoDB_Whole_Scan<T = unknown>(params: IBasicScan): Promise<T[]> {
+  let result: T[] = [];
+  let LastEvaluatedKey;
+  let totalCount = 0;
+
+  logger.info(`filterOutOnlyNewValues`);
+  logger.info(`Scan: Limit = ${params.Limit}`);
+
+  do {
+    const data: PromiseResult<DynamoDB.DocumentClient.ScanOutput, AWSError> = await DynamoDB_Scan({
+      ...params,
+      ExclusiveStartKey: LastEvaluatedKey,
+    });
+
+    LastEvaluatedKey = data.LastEvaluatedKey;
+    totalCount += data.Count || 0;
+
+    const batchOfData = (data.Items || []) as T[];
+    result = [...result, ...batchOfData];
+
+    logger.info(`LastEvaluatedKey: ${JSON.stringify(data.LastEvaluatedKey)}`);
+  } while (typeof LastEvaluatedKey !== 'undefined');
+
+  logger.info(`Total raws: ${totalCount}`);
+
+  return result;
+}
+
 /**
  * A convenience wrapper around DynamoDB scan exposing the more common options
  * @param params params

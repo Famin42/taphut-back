@@ -1,10 +1,11 @@
 import { ApartmentStatus } from 'utils/models';
 
-export interface IOnlinerApartmentRaw {
+export interface IOnlinerApartmentRow {
   id: number;
   status: ApartmentStatus;
   apartment: IOnlinerApartment;
   createdAt: string;
+  updatedAt?: string;
   expirationTime: number;
 }
 
