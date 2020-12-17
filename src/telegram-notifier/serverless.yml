@@ -44,7 +44,7 @@ functions:
     handler: telegram-notifier.handler
     description: Taphut telegram-bot webhook
     memorySize: 256
-    timeout: 5
+    timeout: 300
     events:
       - schedule:
           name: telegram-notifier-event
