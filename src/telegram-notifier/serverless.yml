@@ -1,0 +1,63 @@
+# serverless.yml
+
+service: telegram-notifier
+
+frameworkVersion: '2'
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-aws-alerts
+
+provider:
+  name: aws
+  endpointType: regional
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment: # Service wide environment variables
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    TG_BOT_TOKEN: '${ssm:/taphut/tg-bot-token~true}'
+    USER_POOL_ID: ${env:USER_POOL_ID}
+  iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
+    - Effect: 'Allow'
+      Action:
+        - ssm:DescribeParameters
+        - ssm:GetParameter
+      Resource:
+        - 'arn:aws:ssm:${opt:region, self:provider.region}:*:parameter/taphut/tg-bot-token'
+    - Effect: 'Allow'
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+      Resource:
+        - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/TelegramUserFilters'
+    - Effect: 'Allow'
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:UpdateItem
+      Resource:
+        - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/OnlinerApartment'
+
+functions:
+  telegram-notifier:
+    handler: telegram-notifier.handler
+    description: Taphut telegram-bot webhook
+    memorySize: 256
+    timeout: 5
+    events:
+      - schedule:
+          name: telegram-notifier-event
+          description: 'Scan all users filters and search for suitable new appartment'
+          rate: rate(15 minutes)
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  webpack: ${file(../../serverless/globals.yml):webpack}
+  alerts: ${file(../../serverless/globals.yml):alerts}
+
+# Modes for config validation. The default is warn.
+# `error` throws an exception,
+# `warn` logs error to console,
+# `off` disables validation at all.
+configValidationMode: error

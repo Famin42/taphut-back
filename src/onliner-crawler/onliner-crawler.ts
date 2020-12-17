@@ -5,7 +5,7 @@ import { eachLimit } from 'utils/async';
 import logger, { setDebugLevel } from 'utils/logger';
 import { IOnlinerApartment, IOnlinerData, IOnlinerPagiantion } from './model';
 import {
-  convertToNewOnlinerApartmentRawItem,
+  convertToNewOnlinerApartmentRowItem,
   filterOutOnlyNewValues,
   formOnlnerURL,
   IOnlinerURLParams,
@@ -38,11 +38,11 @@ export const handler: APIGatewayProxyHandler = async (
 
   // SCAN DB and FLITER FOR STAY ONLY NEW
   const filteredApartments = await filterOutOnlyNewValues(apartmentMap);
-  logger.info(`filtered appointments from Onliner: length: ${filteredApartments.length}`);
+  logger.info(`filtered apartments from Onliner: length: ${filteredApartments.length}`);
 
   const Items = filteredApartments.map((item: IOnlinerApartment) => {
     logger.info(`new apartment id: ${item.id}`);
-    return convertToNewOnlinerApartmentRawItem(item);
+    return convertToNewOnlinerApartmentRowItem(item);
   });
 
   await parallelPutOnlinerApartments(Items);
