@@ -48,7 +48,7 @@ async function processMessage({ body }: APIGatewayEvent): Promise<IHttpResponse>
   logger.info(`Build Parser`);
 
   const parser = buildParser({ chatId: chat_id, token });
-  parser((stringCommand as string).toLowerCase());
+  parser(stringCommand);
 
   return httpSuccess();
 }
