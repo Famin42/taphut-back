@@ -24,11 +24,11 @@ custom:
       level: ALL
     mappingTemplatesLocation: .
     mappingTemplates:
-      - dataSource: None
+      - dataSource: OnlinerApartment
         type: Query
-        field: field
-        request: field/field-request.vtl
-        response: field/field-response.vtl
+        field: onlinerApartments
+        request: apartments/onliner/request.vtl
+        response: apartments/onliner/response.vtl
 
     schema: schema.graphql
     serviceRole: 'AppSyncServiceRole'
@@ -36,14 +36,39 @@ custom:
     lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-${self:service}-${opt:region, self:provider.region}'
     loggingServiceRoleName: 'Logging-${self:custom.appSync.serviceRole}-${self:service}-${opt:region, self:provider.region}'
     dataSources:
-      - type: NONE
-        name: None
-        description: 'None datasource'
+      - type: AMAZON_DYNAMODB
+        name: OnlinerApartment
+        description: 'Onliner apartment table'
         config:
+          tableName: 'OnlinerApartment'
           serviceRoleArn: '${self:custom.appSyncDynamoServiceRole}'
 
 resources:
   Resources:
+    AppSyncDynamoDBServiceRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: '${self:custom.appSync.dynamoServiceRoleName}'
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Service:
+                  - 'appsync.amazonaws.com'
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: '${self:custom.appSync.dynamoServiceRoleName}-Policy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'dynamodb:Query'
+                    - 'dynamodb:Scan'
+                  Resource:
+                    - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/OnlinerApartment'
     AppSyncLoggingServiceRole:
       Type: 'AWS::IAM::Role'
       Properties:

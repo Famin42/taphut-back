@@ -28,6 +28,7 @@
     "node-fetch": "^2.6.1",
     "path": "^0.12.7",
     "request": "^2.88.2",
+    "serverless-appsync-plugin": "^1.4.0",
     "source-map-support": "^0.5.10",
     "winston": "^3.3.3",
     "yargs": "^16.1.1"
