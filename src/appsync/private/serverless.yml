@@ -1,0 +1,75 @@
+service: taphut-api-private
+
+plugins:
+  - serverless-appsync-plugin
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  appSyncDynamoServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.dynamoServiceRoleName}'
+  appSyncLambdaServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.lambdaServiceRoleName}'
+  appSyncLoggingServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.loggingServiceRoleName}'
+  appSync:
+    name: taphut-private
+    region: '${opt:region, self:provider.region}'
+    schema: schema.graphql
+    userPoolConfig:
+      awsRegion: us-east-1
+      defaultAction: ALLOW
+      userPoolId: '${env:USER_POOL_ID}'
+    logConfig:
+      loggingRoleArn: '${self:custom.appSyncLoggingServiceRole}'
+      level: ALL
+    authenticationType: AMAZON_COGNITO_USER_POOLS
+    mappingTemplatesLocation: .
+    mappingTemplates:
+      - dataSource: None
+        type: Query
+        field: field
+        request: field/field-request.vtl
+        response: field/field-response.vtl
+
+    serviceRole: AppSyncPrivServiceRole
+    dynamoServiceRoleName: 'Dynamo-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
+    lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
+    loggingServiceRoleName: 'Logging-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
+    dataSources:
+      dataSources:
+        - type: NONE
+          name: None
+          description: 'None datasource'
+          config:
+            serviceRoleArn: '${self:custom.appSyncDynamoServiceRole}'
+
+resources:
+  Resources:
+    AppSyncLoggingServiceRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: '${self:custom.appSync.loggingServiceRoleName}'
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Service:
+                  - 'appsync.amazonaws.com'
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: '${self:custom.appSync.loggingServiceRoleName}-Policy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogGroup'
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    - 'arn:aws:logs:${opt:region, self:provider.region}:${self:custom.accountId}:*'

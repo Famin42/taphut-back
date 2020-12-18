@@ -1,0 +1,62 @@
+schema {
+  query: Query
+}
+
+type Query {
+  # get onliner apartments
+  onlinerApartments(limit: Int = 10, nextToken: String = null): OnlinerApartmentRowWithPagination
+}
+
+type OnlinerApartmentRowWithPagination {
+  items: [OnlinerApartmentRow]
+  nextToken: String
+  scannedCount: Int
+}
+
+type OnlinerApartmentRow {
+  id: Int
+  status: String
+  apartment: OnlinerApartment
+  createdAt: String
+  expirationTime: Int
+  updatedAt: String
+}
+
+type OnlinerApartment {
+  id: Int
+  price: OnlinerApartmentPrice
+  rent_type: String
+  location: OnlinerApartmentLocation
+  photo: String
+  contact: OnlinerApartmentContact
+  created_at: String
+  last_time_up: String
+  up_available_in: Int
+  url: String
+}
+
+type OnlinerApartmentPrice {
+  amount: String
+  currency: String
+  converted: Converter
+}
+
+type OnlinerApartmentLocation {
+  address: String
+  user_address: String
+  latitude: Int
+  longitude: Int
+}
+
+type OnlinerApartmentContact {
+  owner: Boolean
+}
+
+type Converter {
+  key: ConverterSun
+}
+
+type ConverterSun {
+  amount: String
+  currency: String
+}

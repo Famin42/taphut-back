@@ -1,0 +1,96 @@
+service: taphut-api-public
+
+plugins:
+  - serverless-appsync-plugin
+
+provider:
+  name: aws
+  endpointType: REGIONAL
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  appSyncDynamoServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.dynamoServiceRoleName}'
+  appSyncLambdaServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.lambdaServiceRoleName}'
+  appSyncLoggingServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.loggingServiceRoleName}'
+  appSync:
+    name: taphut-public
+    region: '${opt:region, self:provider.region}'
+    authenticationType: API_KEY
+    logConfig:
+      loggingRoleArn: '${self:custom.appSyncLoggingServiceRole}'
+      level: ALL
+    mappingTemplatesLocation: .
+    mappingTemplates:
+      - dataSource: OnlinerApartment
+        type: Query
+        field: onlinerApartments
+        request: apartments/onliner/request.vtl
+        response: apartments/onliner/response.vtl
+
+    schema: schema.graphql
+    serviceRole: 'AppSyncServiceRole'
+    dynamoServiceRoleName: 'Dynamo-${self:custom.appSync.serviceRole}-${self:service}-${opt:region, self:provider.region}'
+    lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-${self:service}-${opt:region, self:provider.region}'
+    loggingServiceRoleName: 'Logging-${self:custom.appSync.serviceRole}-${self:service}-${opt:region, self:provider.region}'
+    dataSources:
+      - type: AMAZON_DYNAMODB
+        name: OnlinerApartment
+        description: 'Onliner apartment table'
+        config:
+          tableName: 'OnlinerApartment'
+          serviceRoleArn: '${self:custom.appSyncDynamoServiceRole}'
+
+resources:
+  Resources:
+    AppSyncDynamoDBServiceRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: '${self:custom.appSync.dynamoServiceRoleName}'
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Service:
+                  - 'appsync.amazonaws.com'
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: '${self:custom.appSync.dynamoServiceRoleName}-Policy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'dynamodb:Query'
+                    - 'dynamodb:Scan'
+                  Resource:
+                    - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/OnlinerApartment'
+    AppSyncLoggingServiceRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: '${self:custom.appSync.loggingServiceRoleName}'
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Service:
+                  - 'appsync.amazonaws.com'
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: '${self:custom.appSync.loggingServiceRoleName}-Policy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogGroup'
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    - 'arn:aws:logs:${opt:region, self:provider.region}:${self:custom.accountId}:*'
