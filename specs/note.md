@@ -32,8 +32,7 @@
 - AWS DynamoDB
 - AWS CloudWatch
 - AWS System Manager
-  - AWS KMS
-  - AWS CloudFormation
+- AWS CloudFormation
   - AWS S3
   - AWS Cognito
   - AWS AppSync
@@ -215,6 +214,20 @@ provider:
     TG_BOT_TOKEN: '${ssm:/taphut/tg-bot-token~true}'
     USER_POOL_ID: ${env:USER_POOL_ID}
 ```
+
+### **6. AWS CloudFormation**
+
+> note: сервисы этого ресурса автоматически разворачиваются с помощью [Serverless[10]](https://www.serverless.com/)
+
+[AWS CloudFormation [22]](https://docs.aws.amazon.com/cloudformation/) дает вам простой способ смоделировать набор связанных ресурсов AWS и сторонних поставщиков, быстро и последовательно предоставлять их и управлять ими на протяжении всего их жизненного цикла, рассматривая инфраструктуру как код. Шаблон CloudFormation описывает желаемые ресурсы и их зависимости, поэтому вы можете запускать и настраивать их вместе как стек. Вы можете использовать шаблон для создания, обновления и удаления всего стека как единого целого так часто, как вам нужно, вместо того, чтобы управлять ресурсами по отдельности. Вы можете управлять стеками и выделять их для нескольких учетных записей AWS и регионов AWS.
+
+> ниже приведен скриншот моих стеков
+
+![cloudformation-stacks](./screenshots/.xdp_my-cloudformation-stacks.OVJFV0)
+
+> ниже приведен скриншот моих стеков
+
+![onliner-crawler-dev-stack](./screenshots/.xdp_onliner-crawler-dev-stack.EO0QV0)
 
 ## Ссылки
 
