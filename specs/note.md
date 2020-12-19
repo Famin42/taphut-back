@@ -31,13 +31,13 @@
 - AWS APIGateway
 - AWS DynamoDB
 - AWS CloudWatch
-  - AWS Cognito
+- AWS System Manager
+  - AWS KMS
+  - AWS CloudFormation
   - AWS S3
+  - AWS Cognito
   - AWS AppSync
   - AWS VTL
-  - AWS CloudFormation
-  - AWS System Manager
-  - AWS KMS
   - AWS Amplify
   - AWS SNS
 
@@ -181,6 +181,39 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_throttle_monitor" {
   alarm_actions             = ["${var.alarm_action_arn}"]
 }
 
+```
+
+### **5. AWS System Manager**
+
+> в этом сервисе я юзаю только `Parameter store` !
+
+[AWS System Manager[23]](https://docs.aws.amazon.com/systems-manager/index.html) `Parameter Store` обеспечивает безопасное иерархическое хранилище для управления данными конфигурации и секретами. Вы можете хранить такие данные, как пароли, строки базы данных, идентификаторы образов Amazon Machine Image (AMI) и коды лицензий в качестве значений параметров. Вы можете хранить значения в виде обычного текста или зашифрованных данных. Вы можете ссылаться на параметры Systems Manager в своих сценариях, командах, документах SSM, а также в рабочих процессах конфигурации и автоматизации, используя уникальное имя, указанное при создании параметра.
+
+> Ниже преведен пример моего токена от телеграм бота, который хранится как `SecureString`, токен зашифрован с помощью симметричного ключа шифрования, за который отвечает [AWS KMS[24]](https://aws.amazon.com/kms/)
+
+![cloudwatch-metric-example](./screenshots/.xdp_parameter-store.6VNOV0)
+
+> Ниже преведен пример, как с помощью `Serverless` досать этот токен, который хранится в зашифрованом виде, и передать его в environment Lambda функции [отсюда](../src/telegram-notifier/serverless.yml)
+
+```yml
+service: telegram-notifier
+
+frameworkVersion: '2'
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-aws-alerts
+
+provider:
+  name: aws
+  endpointType: regional
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment: # Service wide environment variables
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    TG_BOT_TOKEN: '${ssm:/taphut/tg-bot-token~true}'
+    USER_POOL_ID: ${env:USER_POOL_ID}
 ```
 
 ## Ссылки
