@@ -475,6 +475,91 @@ Bot API - это интерфейс на основе HTTP, созданный �
 
 ![terraform-plan-example](./screenshots/.xdp_terraform-plan-example.A7UFV0)
 
+### **[AWS Vault[30]](https://github.com/99designs/aws-vault)**
+
+Так как мы работаем с облачным провадйером, нам нужно как-то хранить, и менеджить ключи, с помощью которых мы прохдим аутентификацию и авторизациб для деплоя.
+
+[AWS Vault[30]](https://github.com/99designs/aws-vault) - это инструмент для безопасного хранения учетных данных AWS и доступа к ним в среде разработки.
+
+[AWS Vault[30]](https://github.com/99designs/aws-vault) хранит учетные данные IAM в защищенном хранилище ключей вашей операционной системы, а затем генерирует из них временные учетные данные для предоставления вашей оболочке и приложениям. Он разработан как дополнение к инструментам AWS CLI и учитывает ваши профили и конфигурацию в `~/.aws/config`.
+
+> **Ниже приведу пример работы AWS-VAULT**
+
+![terraform-plan-example](./screenshots/.xdp_aws-vault.R97SV0)
+
+### **!! ДЛЯ УДОБНОЙ РАБОТЫ/ДЕПЛОЯ C SERVERLESS FRAMWEORK, Я РАЗРАБОТАЛ SHELL SCRIPT, который облегчает деплой**
+
+```sh
+#!/bin/bash
+display_serverless_directories() {
+  echo ""
+  echo "Available serverless directories:"
+  find . -path ./node_modules -prune -o -name serverless.yml -print | sed 's/\/serverless.yml//;s/.\///'
+}
+
+SYNTAX_STRING='yarn sls [dev|prod] serverless_dir ...serverless_args'
+EXAMPLE_STRING='yarn sls dev src/ticker logs -f refreshTicker'
+
+if [ "$1" = "--help" ]; then
+  echo "Help from the serverless command (pass this in place of ...serverless_args):"
+  serverless --help
+  display_serverless_directories
+  echo ""
+  echo "Command syntax: $SYNTAX_STRING"
+  echo "Example: $EXAMPLE_STRING"
+  exit
+fi
+if [ "$#" -lt "3" ]; then
+  echo "Bad args. Syntax: $SYNTAX_STRING"
+  echo "Example: $EXAMPLE_STRING"
+  display_serverless_directories
+  echo ""
+  echo "yarn sls --help for more details on serverless commands"
+  exit
+fi
+
+export stage=$1
+export directory=$2
+shift 2
+
+branch=`git symbolic-ref -q --short HEAD`
+if [ "$stage" = "prod" ]; then
+  if echo $* | grep -q deploy; then
+    if [ "$branch" != "master" ]; then
+      echo "current branch $branch != master. Prod deploy disallowed"
+      exit
+    fi
+
+    # ok, we're on master and it's a prod deploy
+
+    # ensure we're up to date with remote
+    git remote update
+    local=$(git rev-parse master)
+    remote=$(git rev-parse origin/master)
+    if [ $local != $remote ]; then
+      echo "your local checkout must be up to date before prod deployment!"
+      exit
+    fi
+    echo "Good to go for prod deploy. On master, fully up to date with remote..."
+  fi
+fi
+
+
+
+if [ "$stage" = "forceprod" ]; then
+  echo "!!!!!Forcing prod deployment!!!!!"
+  stage="prod"
+fi
+
+export $(cat config/$stage.env | xargs)
+
+cd $directory
+profile=$stage
+
+export $(aws-vault exec $profile --no-session -- env | grep AWS)
+serverless --profile $profile --stage $stage "$@" --color | grep -v "Load command"
+```
+
 ## **3.3 описание разработки бэка (основные функции, бд, schedule events, GraphQL API, HTTP endpoitns)?**
 
 ### DynamoDB
@@ -571,3 +656,4 @@ export interface IOnlinerApartmentLocation {
 27. [AWS SNS](https://docs.aws.amazon.com/sns/index.html)
 28. [Angular](https://angular.io/)
 29. [Telegam API](https://core.telegram.org/)
+30. [AWS Vault](https://github.com/99designs/aws-vault)
