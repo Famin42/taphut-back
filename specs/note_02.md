@@ -108,6 +108,10 @@ events:
    > (тк приходилось бы для каждого элемента совершать операцию `PutItem` с условием выполнения запроса, что безусловно занимает большее количество обращений в БД, чем обычный scan и сделать обработку данных с помощью `Lambda` функци
 5. Конечный сформированный/обработанный объект `apartmentMap`, мы начианем перебирать по ключу и заносить данные в нашу коллекцию `OnlinerApartment` со `status: "NEW`
 
+> **Ниже приведу пару monitoring графиков этой Lambda функции**
+
+![_aws-lambda-telegram-notifier](./screenshots/.xdp_onliner-crawler-dev-onliner-crawler-monitoring.PP3SV0)
+
 > ниже приведено логирование выполнения `Onliner-Crawler` Lambda функции c помощью сервиса `AWS CloudWatch`
 
 ```log
@@ -336,7 +340,73 @@ export function buildParser({ token, chatId }: buildParserParams): (stringComman
 
 > **Ниже приведу пару monitoring графиков этой Lambda функции**
 
-![appsync-public-monitoring](./screenshots/.xdp_aws-lambda-telegram-webhook.KWOUV0)
+![_aws-lambda-telegram-webhook](./screenshots/.xdp_aws-lambda-telegram-webhook.KWOUV0)
+
+## **Разработка telegram-notifier (service: telegram-notifier) :**
+
+> ВОТ ТУТ [serverless.yml config file](../src/telegram-notifier/serverless.yml)
+
+> ВОТ ТУТ [entry point (`handler` функция)](../src/telegram-notifier/telegram-notifier.ts)
+
+**Обощенный алгоритм:**
+
+1. Scan все объявления из `DynamoDB` коллекции `OnlinerApartment` со статусом `NEW`
+2. Scan все фильтры из `DynamoDB` коллекции `TelegramUserFilters`
+3. для каждого объявления проверяем фильтр
+
+   - инициализируем пустой массив `notifications`
+   - инициализириуем и формируем объект `filterMapObj` типа `{ [key: chatId]: arrayOfChatFilters[] }`
+   - проходим по массиву `notifications`
+     - проходим по ключам объекта `filterMapObj` и достаем массивы фильтров в `chatFilters`
+       - проходим по массиву фильтров `chatFilters`
+       - если объявление подходит под фильтр, то заносим идентификатор чата и объявление в массив `notifications` и переходим к следующему ключу объектав `filterMapObj`
+
+4. Запускаем параллельную обработку запросов массива `notifications`, отсылаем пользователю объявление с помощью `sendToUser(filter.chatID, convertApartmentToMsg(apartment))`
+5. Изменяем статус всех объявлений с `NEW` на `OLD`
+
+> ниже приведена часть кода из [serverless.yml config file](../src/telegram-notifier/serverless.yml), в котором настраивается `schedule` событие, которое будет запускать данную функцию каждые 15 минут
+
+```yml
+functions:
+  telegram-notifier:
+    handler: telegram-notifier.handler
+    description: Taphut telegram-bot webhook
+    memorySize: 256
+    timeout: 300
+    events:
+      - schedule:
+          name: telegram-notifier-event
+          description: 'Scan all users filters and search for suitable new appartment'
+          rate: rate(15 minutes)
+```
+
+> ниже приведено логирование выполнения `telegram-notifier` Lambda функции c помощью сервиса `AWS CloudWatch`
+
+```log
+2020-12-21T12:25:08.573+03:00	START RequestId: 555982da-0494-4620-a227-bc1bb124f74c Version: $LATEST
+2020-12-21T12:25:08.611+03:00	[info] Telegram-notifier start
+2020-12-21T12:25:08.633+03:00	[info] filterOutOnlyNewValues
+2020-12-21T12:25:08.671+03:00	[info] Scan: Limit = undefined
+2020-12-21T12:25:09.030+03:00	[info] LastEvaluatedKey: {"id":627016}
+2020-12-21T12:25:09.085+03:00	[info] LastEvaluatedKey: {"id":577312}
+2020-12-21T12:25:09.146+03:00	[info] LastEvaluatedKey: {"id":626387}
+2020-12-21T12:25:09.170+03:00	[info] LastEvaluatedKey: undefined
+2020-12-21T12:25:09.171+03:00	[info] Total raws: 1
+2020-12-21T12:25:09.171+03:00	[info] newApartments count: 1
+2020-12-21T12:25:09.194+03:00	[info] filters count: 12
+2020-12-21T12:25:09.212+03:00	[info] Total notifications count: 0
+2020-12-21T12:25:09.231+03:00	[info] keys for updated to OLD: [{"id":627342}]
+2020-12-21T12:25:09.252+03:00	[info] Apartments status is updated to OLD
+2020-12-21T12:25:09.252+03:00	[info] Telegram-notifier complete
+2020-12-21T12:25:09.271+03:00	END RequestId: 555982da-0494-4620-a227-bc1bb124f74c
+2020-12-21T12:25:09.271+03:00	REPORT RequestId: 555982da-0494-4620-a227-bc1bb124f74c
+2020-12-21T12:25:09.271+03:00 Duration: 698.46 ms	Billed Duration: 699 ms	Memory Size: 256 MB
+2020-12-21T12:25:09.271+03:00 Max Memory Used: 95 MB Init Duration: 569.51 ms
+```
+
+> **Ниже приведу пару monitoring графиков этой Lambda функции**
+
+![_aws-lambda-telegram-notifier](./screenshots/.xdp_aws-lambda-telegram-notifirer-monitoring.OTROV0)
 
 ## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
 
