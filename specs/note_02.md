@@ -253,7 +253,7 @@ dataSources:
 
 ![appsync-public-monitoring](./screenshots/.xdp_appsync-public-monitoring.YHQCV0)
 
-## **Разработка telegram-bot:**
+## **Разработка telegram-bot (service: telegram-bot) :**
 
 > ВОТ ТУТ [serverless.yml config file](../src/telegram-bot/serverless.yml)
 
@@ -337,8 +337,6 @@ export function buildParser({ token, chatId }: buildParserParams): (stringComman
 > **Ниже приведу пару monitoring графиков этой Lambda функции**
 
 ![appsync-public-monitoring](./screenshots/.xdp_aws-lambda-telegram-webhook.KWOUV0)
-
-## **3.4 описание разработки Telegram endpoint-а для бота на бэке?**
 
 ## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
 
