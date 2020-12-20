@@ -584,68 +584,7 @@ serverless --profile $profile --stage $stage "$@" --color | grep -v "Load comman
 
 ![terraform-plan-example](./screenshots/.xdp_AWS-Cognito-Google-OAuth.4SSOV0)
 
-### DynamoDB
-
-Коллекция - `OnlinerApartment`:
-
-- `id`: **number** // `Primary key` - те `hash_key` Attribute
-- `expirationTime`: **number** // !! `TTL` Attribute
-- `status`: **string** // принимает значения "OLD" и "NEW"
-- `createdAt`: **string** // timestamp
-- `updatedAt`: **string** // timestamp
-- `apartment`: **Object** // объект с Onliner.by (`IOnlinerApartment`)
-  - [там оочень больша модель IOnlinerApartment](../src/onliner-crawler/model.ts)
-
-```ts
-export interface IOnlinerApartment {
-  id: number;
-  price: {
-    amount: string;
-    currency: OnlinerCurrences;
-    converted: {
-      [key: string]: {
-        amount: string;
-        currency: OnlinerCurrences;
-      };
-    };
-  };
-  rent_type: OnlinerRentType;
-  location: IOnlinerApartmentLocation;
-  photo: string;
-  contact: {
-    owner: boolean;
-  };
-  created_at: string;
-  last_time_up: string;
-  up_available_in: number;
-  url: string;
-}
-
-export type OnlinerCurrences = 'USD' | 'BYN';
-
-export type OnlinerRentType = '1_rooms' | '2_rooms' | '3_rooms' | '4_rooms' | '5_rooms';
-
-export interface IOnlinerApartmentLocation {
-  address: string;
-  user_address: string;
-  latitude: number;
-  longitude: number;
-}
-```
-
-![dynamodb-onliner](./screenshots/.xdp_dynamodb-onliner.AE8JV0)
-
-## **3.4 описание разработки Telegram endpoint-а для бота на бэке?**
-
-## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
-
-# **Тестирование**
-
-## описание тестирования
-
-# **Руководство программиста**
-
-## описание руководства программиста
+> # ПРОДОЛЖЕНИЕ В [NOTE 2](./note_02.md)
 
 ## Ссылки
 

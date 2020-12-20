@@ -5,7 +5,8 @@ Taphut is telegram bot assistant in real estate.
 
 ## Specs
 
-- [RU description](./specs/note.md)
+- [RU description Part 1](./specs/note_01.md)
+- [RU description Part 2](./specs/note_02.md)
 
 ## [Trello](https://trello.com/b/fQ6ZPIsl)
 
