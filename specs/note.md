@@ -343,12 +343,66 @@ Bot API - это интерфейс на основе HTTP, созданный �
 
 # **Разработка**
 
-## описание разработки
+## **3.1 натсройка проекта бэка (webpack, ESLint, Prettier и тп)**
 
-- настройка окружеия бэка
-- настройка управления инфраструктурой бэка
-- описание основных фич? (бд, функции, graphql, http)
-- разработка фронта (тут надо упомянуть библиотеку Amplify для взаимодействия браузерного клиента с AWS Cognito)
+## **3.2 натсройка деплоя и управления инфраструктурой бэка на AWS (Serverless, Terraform)**
+
+## **3.3 описание разработки бэка (основные функции, бд, schedule events, GraphQL API, HTTP endpoitns)?**
+
+### DynamoDB
+
+Коллекция - `OnlinerApartment`:
+
+- `id`: **number** // `Primary key` - те `hash_key` Attribute
+- `expirationTime`: **number** // !! `TTL` Attribute
+- `status`: **string** // принимает значения "OLD" и "NEW"
+- `createdAt`: **string** // timestamp
+- `updatedAt`: **string** // timestamp
+- `apartment`: **Object** // объект с Onliner.by (`IOnlinerApartment`)
+  - [там оочень больша модель IOnlinerApartment](../src/onliner-crawler/model.ts)
+
+```ts
+export interface IOnlinerApartment {
+  id: number;
+  price: {
+    amount: string;
+    currency: OnlinerCurrences;
+    converted: {
+      [key: string]: {
+        amount: string;
+        currency: OnlinerCurrences;
+      };
+    };
+  };
+  rent_type: OnlinerRentType;
+  location: IOnlinerApartmentLocation;
+  photo: string;
+  contact: {
+    owner: boolean;
+  };
+  created_at: string;
+  last_time_up: string;
+  up_available_in: number;
+  url: string;
+}
+
+export type OnlinerCurrences = 'USD' | 'BYN';
+
+export type OnlinerRentType = '1_rooms' | '2_rooms' | '3_rooms' | '4_rooms' | '5_rooms';
+
+export interface IOnlinerApartmentLocation {
+  address: string;
+  user_address: string;
+  latitude: number;
+  longitude: number;
+}
+```
+
+![dynamodb-onliner](./screenshots/.xdp_dynamodb-onliner.AE8JV0)
+
+## **3.4 описание разработки Telegram endpoint-а для бота на бэке?**
+
+## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
 
 # **Тестирование**
 
