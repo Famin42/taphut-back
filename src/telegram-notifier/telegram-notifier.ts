@@ -30,7 +30,7 @@ type Notification = { chat_id: string; apartment: IOnlinerApartment };
  *        - iterate through chatIds in filterMapObj
  *          - iterate through all filters in chatIds
  *            - if apartment suite for filter, push { chatId, apartment } to notification and go to next chatId
- *  4. Parallel process notifications and execute sendToUser(filter.chatID, convertApartmentToMsg(Ap))
+ *  4. Parallel process notifications and execute sendToUser(filter.chatID, convertApartmentToMsg(apartment))
  *  5. Update NEW Apartment to OLD Apartments
  */
 export const handler: APIGatewayProxyHandler = async (
