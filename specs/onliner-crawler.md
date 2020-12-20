@@ -45,5 +45,5 @@ Issues that may arise and how to handle them.
 ## File structure
 
 ```sh
-crawlers/onliner
+src/onliner-crawler
 ```
