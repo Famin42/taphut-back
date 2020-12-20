@@ -85,6 +85,20 @@ export type Currency = 'USD' | 'BYN';
 
 Onliner-Crawler будет собирать данные с onliner, проверять их и отправлять новые данные в DynamoDB для следующей обработки.
 
+запускается кажде 15 минут, описано в [serverless.yml config](../src/onliner-crawler/serverless.yml)
+
+> а именно здечь
+
+```yml
+# ...
+events:
+  - schedule:
+      name: onliner-crawler-event
+      description: 'Run the Onliner Crawler to fetch data from Onliner'
+      rate: rate(15 minutes)
+# ...
+```
+
 **Обощенный алгоритм:**
 
 1. Совершает первоначальный запрос на `Onliner API`, получает количество элементов, информацтю для пагинации
