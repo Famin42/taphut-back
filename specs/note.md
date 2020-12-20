@@ -580,6 +580,10 @@ serverless --profile $profile --stage $stage "$@" --color | grep -v "Load comman
 
 ![terraform-plan-example](./screenshots/.xdp_AWS-Cognito-groups.AYUEV0)
 
+> **Ниже приведу пример подключения Google OAuth**
+
+![terraform-plan-example](./screenshots/.xdp_AWS-Cognito-Google-OAuth.4SSOV0)
+
 ### DynamoDB
 
 Коллекция - `OnlinerApartment`:
