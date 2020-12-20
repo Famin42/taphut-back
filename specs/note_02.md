@@ -253,6 +253,89 @@ dataSources:
 
 ![appsync-public-monitoring](./screenshots/.xdp_appsync-public-monitoring.YHQCV0)
 
+## **Разработка telegram-bot:**
+
+> ВОТ ТУТ [serverless.yml config file](../src/telegram-bot/serverless.yml)
+
+> ВОТ ТУТ [entry point (`handler` функция)](../src/telegram-bot/webhook.ts)
+
+> **NOTE:** Важно отметить, что я выбрал реализацию Telegram-bot именно через webhook, так long polling запросы требуют открытого соединения, что не целесообразно для AWS Lambda. Так как мы плати за время выполнения функции и вообще максимально допустимое время выполнения функции состовялет не более 15 минут
+
+> настройка функции на event от APIGateway, POST запрос на ${domain}/bot-api, CORS enabled
+
+```yml
+# ...
+functions:
+  webhook:
+    handler: webhook.handler
+    description: Taphut telegram-bot webhook
+    memorySize: 256
+    timeout: 30
+    events:
+      - http:
+          path: bot-api
+          method: post
+          cors: true
+# ...
+```
+
+Для реализации интерфейса взаимодействия пользователя с приложеним, я выбрал вариант разработки CLI интерфейса, и потом посредством его парсить входящие данные из бота, и возращать результат.
+
+Для реализации CLI интерфейса взаимодейсвтяи был выбран паке [yargs](https://github.com/yargs/yargs).
+
+> ВОТ ТУТ [главный файл, в котором я предостовляю builder CLI parser-a `export function buildParser`](../src/telegram-bot/cli.ts)
+
+> ВОТ ТУТ [файл, в котором я задаю правила комманды `filter-list`](../src/telegram-bot/commands/filter-list.ts)
+
+> ВОТ ТУТ [файл, в котором я задаю правила комманды `filter-get`](../src/telegram-bot/commands/filter-get.ts)
+
+> ВОТ ТУТ [файл, в котором я задаю правила комманды `filter-create`](../src/telegram-bot/commands/filter-create.ts)
+
+> ВОТ ТУТ [файл, в котором я задаю правила комманды `filter-update`](../src/telegram-bot/commands/filter-update.ts)
+
+> ВОТ ТУТ [файл, в котором я задаю правила комманды `filter-delete`](../src/telegram-bot/commands/filter-delete.ts)
+
+[yargs](https://github.com/yargs/yargs) пакет автоматически потом дополнит такие комманды как `help`, основываясь на моих коммандах: `filter-list`, `filter-get`, `filter-create`, `filter-update`, `filter-delete`
+
+Так же, я переопределил метод ответа CLI парсера, вместо логгированя в консоль, конечный ответ вызовет функцию, которая отправит запрос на Telegram-API и пользователь получит ответ.
+
+```ts
+// ...
+
+function buildResponder(token: string, chat_id: string): any {
+  return function (msg: any): any {
+    sendToUser({ token, chat_id, text: msg });
+    console.log(msg);
+  };
+}
+
+// ...
+export function buildParser({ token, chatId }: buildParserParams): (stringCommand: string) => void {
+  // ...
+
+  const context: Context = {
+    respond: buildResponder(token, chatId),
+  };
+
+  return (stringCommand: string) => {
+    logger.info(`Command to parse: ${stringCommand}`);
+    parser.parse(stringCommand || '', context, (err: any, argv: any, output: any) => {
+      if (err) console.log(err.message);
+      if (output) {
+        argv.respond(output);
+      }
+    });
+  };
+}
+// ...
+```
+
+Далее, мы обратилсь в `@BotFather` для создания телеграмм-бота, установили полученый токен в **AWS System Manager -> Parameter Store**. И сконфигурировали webhook нашего бота на endpoint APIGateway, который передаст обработку запроса уже в нашу Lambda функцию
+
+> **Ниже приведу пару monitoring графиков этой Lambda функции**
+
+![appsync-public-monitoring](./screenshots/.xdp_aws-lambda-telegram-webhook.KWOUV0)
+
 ## **3.4 описание разработки Telegram endpoint-а для бота на бэке?**
 
 ## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
