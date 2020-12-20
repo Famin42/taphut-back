@@ -249,7 +249,7 @@ dataSources:
 # ...
 ```
 
-> **Ниже приведу monitoring графики этого сервиса**
+> **Ниже приведу пару monitoring графиков этого сервиса**
 
 ![appsync-public-monitoring](./screenshots/.xdp_appsync-public-monitoring.YHQCV0)
 
