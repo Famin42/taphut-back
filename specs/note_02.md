@@ -177,6 +177,82 @@ events:
 2020-12-20T10:19:42.595+03:00 Max Memory Used: 140 MB Init Duration: 550.60 ms
 ```
 
+## AppSync Public (GraphQL Endpoint), имя сервиса: `taphut-api-public`
+
+> ВОТ ТУТ [public graphql schema config](../src/appsync/public/schema.graphql)
+
+> ВОТ ТУТ [serverless.yml config file](../src/appsync/public/serverless.yml)
+
+> ВОТ ТУТ [request.vtl](../src/appsync/public/apartments/onliner/request.vtl)
+
+> ВОТ ТУТ [response.vtl](../src/appsync/public/apartments/onliner/response.vtl)
+
+> **!! ВОТ ТУТ ВАЖНО БУДЕТ УПОМЯНУТЬ ПРО ТОТ САМЫЙ VTL, его реализацию**
+
+### схема GraphQL
+
+```graphql
+schema {
+  query: Query
+}
+
+type Query {
+  # get onliner apartments
+  onlinerApartments(limit: Int = 10, nextToken: String = null): OnlinerApartmentRowWithPagination
+}
+
+#  ...
+```
+
+### объявление GraphQL в AppSync
+
+```yml
+# ...
+mappingTemplatesLocation: .
+mappingTemplates:
+  - dataSource: OnlinerApartment
+    type: Query
+    field: onlinerApartments
+    request: apartments/onliner/request.vtl
+    response: apartments/onliner/response.vtl
+# ...
+```
+
+### request.vtl для `onlinerApartments`
+
+```vtl
+{
+  "version" : "2017-02-28",
+  "operation" : "Scan",
+  "limit": $util.defaultIfNull($ctx.args.limit, 10),
+  "nextToken": $util.toJson($util.defaultIfNull($ctx.args.nextToken, null)),
+}
+```
+
+### response.vtl для `onlinerApartments`
+
+```vtl
+$util.toJson($context.result)
+```
+
+### объявление ресурса
+
+```yml
+# ...
+dataSources:
+  - type: AMAZON_DYNAMODB
+    name: OnlinerApartment
+    description: 'Onliner apartment table'
+    config:
+      tableName: 'OnlinerApartment'
+      serviceRoleArn: '${self:custom.appSyncDynamoServiceRole}'
+# ...
+```
+
+> **Ниже приведу monitoring графики этого сервиса**
+
+![appsync-public-monitoring](./screenshots/.xdp_appsync-public-monitoring.YHQCV0)
+
 ## **3.4 описание разработки Telegram endpoint-а для бота на бэке?**
 
 ## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
