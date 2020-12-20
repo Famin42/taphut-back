@@ -60,15 +60,9 @@ if [ "$stage" = "forceprod" ]; then
 fi
 
 export $(cat config/$stage.env | xargs)
+
 cd $directory
 profile=$stage
-if [ $stage = "dev" ]; then
-  stage=taphut-dev
-fi
-
-if [ $stage = "prod" ]; then
-  stage=taphut-prod
-fi
 
 export $(aws-vault exec $profile --no-session -- env | grep AWS)
 serverless --profile $profile --stage $stage "$@" --color | grep -v "Load command"
