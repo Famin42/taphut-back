@@ -562,6 +562,24 @@ serverless --profile $profile --stage $stage "$@" --color | grep -v "Load comman
 
 ## **3.3 описание разработки бэка (основные функции, бд, schedule events, GraphQL API, HTTP endpoitns)?**
 
+### AWS Cognito, добавление UserPool-a и Google OAuth
+
+Настройка AWS Cognito осуществлялась полностью с помощью браузерного клиента AWS Console.
+
+Пошаговая инструкция с примерами приведена [здесь](https://docs.aws.amazon.com/cognito/latest/developerguide/aws-cognito-sign-up-aws-account.html).
+
+> **Ниже приведу пример основной информации о моем UserPool-e**
+
+![terraform-plan-example](./screenshots/.xdp_AWS-Cognito-summary-info.I7WCV0)
+
+> **Ниже приведу пример user-ов в моем UserPool-e**
+
+![terraform-plan-example](./screenshots/.xdp_AWS-Cognito-users.IAJIV0)
+
+> **Ниже приведу пример груп пользователей в моем UserPool-e**
+
+![terraform-plan-example](./screenshots/.xdp_AWS-Cognito-groups.AYUEV0)
+
 ### DynamoDB
 
 Коллекция - `OnlinerApartment`:
