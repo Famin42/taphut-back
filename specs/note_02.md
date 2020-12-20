@@ -283,6 +283,8 @@ functions:
 
 Для реализации CLI интерфейса взаимодейсвтяи был выбран паке [yargs](https://github.com/yargs/yargs).
 
+[yargs](https://github.com/yargs/yargs) - помогает создавать интерактивные инструменты командной строки, анализируя аргументы и создавая элегантный пользовательский интерфейс.
+
 > ВОТ ТУТ [главный файл, в котором я предостовляю builder CLI parser-a `export function buildParser`](../src/telegram-bot/cli.ts)
 
 > ВОТ ТУТ [файл, в котором я задаю правила комманды `filter-list`](../src/telegram-bot/commands/filter-list.ts)
