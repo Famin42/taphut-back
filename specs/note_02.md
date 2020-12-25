@@ -410,6 +410,171 @@ functions:
 
 ## **3.5 описание разработки Angular client-а + настройка его CI/DI?**
 
+Для frontend-a создан отдельный репозиторий на [Github](https://github.com/Fomin2402/taphut-front).
+
+Первым делом, была продумана архитектура DOM-a Angular приложения:
+
+```sh
+root
+├── auth/signin
+├── auth/signup
+├── auth/signup/confirm
+├── auth/password/forger
+├── auth/password/forger/confirm
+├── auth/password/change
+└── main (canActivate: AuthenticationGuard)
+   ├── Telegram OAuth
+   └── property rental ads
+
+
+```
+
+Первым делом, надо было реализовать Аутентификацию/Авторизацию. Для этого нам понадобиться [Amplify библиоетка](https://docs.amplify.aws/), для обращения к нашем AWS Cognito сервису. Тут мы столкнулись с неудобством использования этой библиотеки, тк в Angular-е очень удобно использовать реактивный подход с помощью `Rxjs`. Поэтому была написан первый варант обертки над Amplify для удобного взаимодействия. ([ссылка тут](https://github.com/Fomin2402/taphut-front/blob/master/src/app/services/amplify.service.ts)).
+
+После этого, следующим шагом была реализация `AuthenticationGuard`, для защиты перехода не аутентифицированного юезра на страницы приложения ([ссылка на AuthenticationGuard](https://github.com/Fomin2402/taphut-front/blob/master/src/app/guards/authentication.guard.ts)). Его мы будем использовать в определении `Rouets` [тут](https://github.com/Fomin2402/taphut-front/blob/master/src/app/app-routing.module.ts). Сделан таким образом, что если неаутентифицированный пользователь захочет перейти на закрытую страницу, то он будем перенаправлен на страницу `login-a`.
+
+Следующим шагом было подключение UI библиотеки [Angular Material](https://material.angular.io/). Его преимущества:
+
+- Интернационализированные и доступные компоненты для всех. Хорошо протестирован, чтобы гарантировать производительность и надежность.
+- Простые API с последовательным кроссплатформенным поведением.
+- Универсальный. Предоставьте инструменты, которые помогут разработчикам создавать собственные настраиваемые компоненты с общими шаблонами взаимодействия.
+- Настраивается в рамках спецификации Material Design.
+- Создан командой Angular для интеграции с Angular имея высокую производительность/эффективность.
+
+После того, как мы подключили [Angular Material](https://material.angular.io/), первым делом в `root` компоненте реализовал `header`:
+
+```html
+<mat-toolbar color="primary" class="example-toolbar">
+  <h1 class="header-title big">Taphut</h1>
+  <span class="flex-1"></span>
+
+  <button *ngIf="amplify.isAuthenticatedSubj | async" mat-button (click)="logout()">logout</button>
+  <a
+    *ngIf="amplify.isAuthenticatedSubj | async"
+    mat-button
+    [routerLink]="['/', 'auth', 'password', 'change']"
+    >password change</a
+  >
+  <a
+    *ngIf="!(amplify.isAuthenticatedSubj | async)"
+    mat-button
+    [routerLink]="['/', 'auth', 'signin']"
+    >signin</a
+  >
+  <a
+    *ngIf="!(amplify.isAuthenticatedSubj | async)"
+    mat-button
+    [routerLink]="['/', 'auth', 'signup']"
+    >signup</a
+  >
+</mat-toolbar>
+
+<router-outlet></router-outlet>
+```
+
+Далее надо было реазиловать `GraphQL` севрис, который позволит нам взаимодействовать с нашем бэком посредством `GraphQL API`. Первым делом, решил реализовать на главной странице показ объявления по аренде недвижимости с `infinite-scroll` пагинецией.
+
+> [код на GraphQL сервис](https://github.com/Fomin2402/taphut-front/blob/master/src/app/graphql.module.ts)
+
+> [код на сервис, который будет предоставлять API для получения объявлений](https://github.com/Fomin2402/taphut-front/blob/master/src/app/services/product.service.ts)
+
+> [код на компонент, который будет обращауется к сервису за объявлениями, а потом их выводит](https://github.com/Fomin2402/taphut-front/blob/master/src/app/components/shell/shell.component.ts)
+
+Следующим шагом стало добавления [Telegram Login Widget](https://core.telegram.org/widgets/login), чтобы в будущем позволить web-клиенту привязать к своей учетной записи чат с ботом из телеграмма. Это нужно, чтобы в будущем добавить функционал, для более удобного редактирования фильтров, просмотра объявлений и статистики с помощью браузерного клиента, при этом получая нотификации в `Telegram` клиенте.
+
+Первая сложность в реализации [Telegram Login Widget](https://core.telegram.org/widgets/login) стало то, что в Angular нельзя просто так вставить в разметку тег `<script>`.
+Я создал компонент, который эо обходит, добавляя динамически в разметку необходимый `<script>`. [Ссылка на `telegram component`](https://github.com/Fomin2402/taphut-front/blob/master/src/app/components/telegram/telegram.component.ts).
+
+> тут важно упомянуть, что динамическая вставка в DOM должна происходить именно в `AfterViewInit` **lifecycle hook-e**.
+
+Далее, для корректной работы [Telegram Login Widget](https://core.telegram.org/widgets/login) необходимо запустить приложение на `https`. На этом этапе я решил подключить CI/DI для более удобной работы/тестирования моего Angular приложения.
+
+В качестве CI/DI инструмента я выбрал облачного провайдера [Vercel](https://vercel.com).
+
+[Vercel](https://vercel.com) - это облачная платформа для статических сайтов и бессерверных функций, которая идеально подходит для вашего рабочего процесса. Он позволяет разработчикам размещать веб-сайты и веб-службы Jamstack, которые мгновенно развертываются, автоматически масштабируются и не требуют контроля, и все это без настройки.
+
+> **Jamstack** - это новая стандартная архитектура для Интернета. Используя рабочие процессы Git и современные инструменты сборки, предварительно обработанный контент передается в CDN и становится динамическим с помощью API и бессерверных функций. Технологии в стеке включают фреймворки JavaScript, генераторы статических сайтов, безголовые CMS и CDN.
+
+> **Ниже приведу пример ng version**
+
+![ng-version](./screenshots/.xdp_ng-version.GRN5V0)
+
+> **Ниже приведу пример Vercel dashboard**
+
+![vercel-dashboard](./screenshots/vercel-dashboard.png)
+
+> **Ниже приведу пример деплоя master ветки**
+
+![vercel-master](./screenshots/vercel-master.png)
+
+> **Ниже приведу пример деплоя ветки, когда произошла ошибка сборки**
+
+![vercel-error](./screenshots/vercel-error.png)
+
+> **Ниже приведу пример настройки domain-a**
+
+![vercel-domain-settings](./screenshots/.xdp_vercel-domain-settings.8KJ1V0)
+
+Ниже приведена структура angular проекта:
+
+```sh
+~/taphut-front
+├── README.md
+├── angular.json
+├── e2e
+|  ├── protractor.conf.js
+|  ├── src
+|  |  ├── app.e2e-spec.ts
+|  |  └── app.po.ts
+|  └── tsconfig.json
+├── karma.conf.js
+├── package-lock.json
+├── package.json
+├── src
+|  ├── app
+|  |  ├── app-routing.module.ts
+|  |  ├── app.component.html
+|  |  ├── app.component.scss
+|  |  ├── app.component.spec.ts
+|  |  ├── app.component.ts
+|  |  ├── app.module.ts
+|  |  ├── components
+|  |  |  ├── change-password
+|  |  |  ├── confirm-signup
+|  |  |  ├── forgot-password
+|  |  |  ├── forgot-password-submit
+|  |  |  ├── shell
+|  |  |  ├── signin
+|  |  |  ├── signup
+|  |  |  └── telegram
+|  |  ├── graphql.module.ts
+|  |  ├── guards
+|  |  |  └── authentication.guard.ts
+|  |  ├── services
+|  |  |  ├── amplify.service.spec.ts
+|  |  |  ├── amplify.service.ts
+|  |  |  ├── product.service.spec.ts
+|  |  |  └── product.service.ts
+|  |  └── utils
+|  |     ├── form-validators.ts
+|  |     ├── models.ts
+|  |     └── routes.ts
+|  ├── assets
+|  ├── environments
+|  |  ├── environment.prod.ts
+|  |  └── environment.ts
+|  ├── favicon.ico
+|  ├── index.html
+|  ├── main.ts
+|  ├── polyfills.ts
+|  ├── styles.scss
+|  └── test.ts
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.spec.json
+└── tslint.json
+```
+
 # **Тестирование**
 
 ## описание тестирования
