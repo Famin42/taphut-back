@@ -593,6 +593,12 @@ root
 
 > **Тесты Backend**
 
+> [тут](../src/utils/async.test.ts) код тестов для back-a (тесты async обертки)
+
+> [тут](../src/utils/date.test.ts) код тестов для back-a (тесты date конвертеров)
+
+> [тут](../src/utils/dynamodb.test.ts) код тестов для back-a (тест очистки объекта)
+
 ![angular-tests](./screenshots/back-tests.png)
 
 ## описание тестирования
