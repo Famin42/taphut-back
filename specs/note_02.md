@@ -421,7 +421,7 @@ root
 ├── auth/signup/confirm
 ├── auth/password/forger
 ├── auth/password/forger/confirm
-├── auth/password/change
+├── auth/password/change (canActivate: AuthenticationGuard)
 └── main (canActivate: AuthenticationGuard)
    ├── Telegram OAuth
    └── property rental ads
