@@ -577,6 +577,8 @@ root
 
 # **Тестирование**
 
+## Для фронта использован Karma + Jasmine ??? ([ссылка](https://angular.io/guide/testing))
+
 > [тут](https://github.com/Fomin2402/taphut-front/blob/feature/store/src/app/pages/apartments/store/actions/apartments.actions.spec.ts) код тестов для angular (тесты Action-ов)
 
 > [тут](https://github.com/Fomin2402/taphut-front/blob/feature/store/src/app/pages/apartments/store/reducers/apartments.reducer.spec.ts) код тестов для angular (тесты Reducer-a)
@@ -592,6 +594,8 @@ root
 ![angular-tests](./screenshots/angular-tests-2.png)
 
 > **Тесты Backend**
+
+## Для бэка использован фреймворк jest
 
 > [тут](../src/utils/async.test.ts) код тестов для back-a (тесты async обертки)
 
