@@ -577,6 +577,18 @@ root
 
 # **Тестирование**
 
+> **Тесты Angular**
+
+![angular-tests](./screenshots/angular-tests.png)
+
+> **Тесты Angular 2**
+
+![angular-tests](./screenshots/angular-tests-2.png)
+
+> **Тесты Backend**
+
+![angular-tests](./screenshots/back-tests.png)
+
 ## описание тестирования
 
 # **Руководство программиста**
