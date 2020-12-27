@@ -1,0 +1,6 @@
+## pass errors out of the lambda without triggering error in cloudwatch metrics
+#if( $context.result && $context.result.error )
+    $utils.error($context.result.error)
+#else
+    $utils.toJson($context.result)
+#end

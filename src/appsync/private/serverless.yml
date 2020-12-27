@@ -11,7 +11,6 @@ provider:
 
 custom:
   accountId: '${env:AWS_ACCOUNT_ID}'
-  appSyncDynamoServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.dynamoServiceRoleName}'
   appSyncLambdaServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.lambdaServiceRoleName}'
   appSyncLoggingServiceRole: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.appSync.loggingServiceRoleName}'
   appSync:
@@ -28,26 +27,60 @@ custom:
     authenticationType: AMAZON_COGNITO_USER_POOLS
     mappingTemplatesLocation: .
     mappingTemplates:
-      - dataSource: None
+      - dataSource: AdminGetUserInfo
         type: Query
-        field: field
-        request: field/field-request.vtl
-        response: field/field-response.vtl
+        field: adminGetUserInfo
+        request: admin/default-request.vtl
+        response: admin/default-response.vtl
+      - dataSource: AdminDeleteUserAccount
+        type: Mutation
+        field: adminDeleteUserAccount
+        request: admin/default-request.vtl
+        response: admin/default-response.vtl
 
     serviceRole: AppSyncPrivServiceRole
-    dynamoServiceRoleName: 'Dynamo-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
     lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
     loggingServiceRoleName: 'Logging-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
     dataSources:
-      dataSources:
-        - type: NONE
-          name: None
-          description: 'None datasource'
-          config:
-            serviceRoleArn: '${self:custom.appSyncDynamoServiceRole}'
+      - type: AWS_LAMBDA
+        name: AdminGetUserInfo
+        description: 'Admin lambda to get user info'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:admin-${self:provider.stage}-getUserInfo'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
+      - type: AWS_LAMBDA
+        name: AdminDeleteUserAccount
+        description: 'Admin lambda to delete user account'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:admin-${self:provider.stage}-deleteUserAccount'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
 
 resources:
   Resources:
+    AppSyncPrivLambdaServiceRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: '${self:custom.appSync.lambdaServiceRoleName}'
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Service:
+                  - 'appsync.amazonaws.com'
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: '${self:custom.appSync.lambdaServiceRoleName}-Policy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'lambda:invokeFunction'
+                  Resource:
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-getUserInfo'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-deleteUserAccount'
     AppSyncLoggingServiceRole:
       Type: 'AWS::IAM::Role'
       Properties:
