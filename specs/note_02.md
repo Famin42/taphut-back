@@ -609,6 +609,43 @@ root
 
 # **Руководство программиста**
 
+1. необходимо ознакомиться с AWS, AWS-Vault, Serverless, Terraform, Vercel, Anuglar, Telegram API
+2. Создать аккаунт на AWS, задать креды локально в AWS-Vault
+3. создать `terraform backend`
+
+```sh
+cd ./terraform/init-stored-state/on-dev
+aws-vault exec ${your_account} -- terraform init
+aws-vault exec ${your_account} -- terraform apply
+```
+
+4. развернуть ресурсы, которые управляются с помощью `terraform`
+
+```sh
+cd ./terraform/dev
+aws-vault exec ${your_account} -- terraform init
+aws-vault exec ${your_account} -- terraform plan
+aws-vault exec ${your_account} -- terraform apply
+```
+
+5. создать вручную `Telegram-bot` и добавить его токен в `AWS KMS`
+6. начать разворачивать `Serverless` ресурсы в определенном порядке
+
+```sh
+yarn sls ${your_account} src/telegram-bot deploy -v
+yarn sls ${your_account} src/telegram-notifier deploy -v
+yarn sls ${your_account} src/onliner-crawler deploy -v
+yarn sls ${your_account} src/appsync/public deploy -v
+```
+
+7. установить `webhook` для бота, установив в `set-telegram-webhook.ts` `newEndpoint` и после вызвав скрипт
+
+```sh
+yarn script-dev src/script/set-telegram-webhook.ts
+```
+
+8. Вручную на Vercel натсроить CI/DI `taphut-front` репозитория
+
 ## описание руководства программиста
 
 # Ссылки
