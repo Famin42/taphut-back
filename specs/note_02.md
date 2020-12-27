@@ -577,6 +577,12 @@ root
 
 # **Тестирование**
 
+> [тут](https://github.com/Fomin2402/taphut-front/blob/feature/store/src/app/pages/apartments/store/actions/apartments.actions.spec.ts) код тестов для angular (тесты Action-ов)
+
+> [тут](https://github.com/Fomin2402/taphut-front/blob/feature/store/src/app/pages/apartments/store/reducers/apartments.reducer.spec.ts) код тестов для angular (тесты Reducer-a)
+
+> [тут](https://github.com/Fomin2402/taphut-front/blob/feature/store/src/app/pages/apartments/store/selectors/apartments.selectors.spec.ts) код тестов для angular (тесты Selector-ов)
+
 > **Тесты Angular**
 
 ![angular-tests](./screenshots/angular-tests.png)
