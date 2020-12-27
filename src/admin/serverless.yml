@@ -1,0 +1,36 @@
+service: admin
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-aws-alerts
+
+provider:
+  name: aws
+  endpointType: REGIONAL
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    USER_POOL_ID: ${env:USER_POOL_ID}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - cognito-idp:AdminListUserAuthEvents
+        - cognito-idp:ListUsers
+        - cognito-idp:AdminGetUser
+        - cognito-idp:AdminDeleteUser
+      Resource:
+        - 'arn:aws:cognito-idp:${opt:region, self:provider.region}:*:userpool/${env:USER_POOL_ID}'
+
+functions:
+  getUserInfo:
+    handler: getuserinfo.handler
+    timeout: 10
+  deleteUserAccount:
+    handler: deleteuseraccount.handler
+    timeout: 10
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  webpack: ${file(../../serverless/globals.yml):webpack}
+  alerts: ${file(../../serverless/globals.yml):alerts}

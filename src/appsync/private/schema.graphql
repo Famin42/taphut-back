@@ -3,6 +3,61 @@ schema {
   mutation: Mutation
 }
 
-type Mutation {}
+type Mutation {
+  # Delete user account(s) as an admin
+  # * **email**: delete a user account by email address
+  # * **userid**: delete a user account by userid
+  # * **returns**: details about the users deleted
+  adminDeleteUserAccount(email: String, userid: String): AdminDeleteUserAccountResult!
+    @aws_auth(cognito_groups: ["admin"])
+}
 
-type Query {}
+type Query {
+  # lookup info about a user as an admin
+  # * **email**: lookup user by email address
+  # * **userid**: lookup user by their userid
+  # * **returns**: details about the user
+  adminGetUserInfo(email: String, userid: String): AdminGetUserInfoResult!
+    @aws_auth(cognito_groups: ["admin"])
+}
+
+type UserAttribute {
+  key: String
+  value: String
+}
+
+type UserInfo {
+  userid: String
+  createDate: String
+  lastModifiedDate: String
+  enabled: Boolean
+  userStatus: String
+  preferredMfaSetting: String
+  mfaSettingList: [String!]
+  attributes: [UserAttribute!]
+}
+
+type AuthEvent {
+  id: String
+  type: String
+  creationDate: String
+  response: String
+  riskDecision: String
+  deviceName: String
+  ipAddress: String
+  city: String
+  country: String
+}
+
+type AdminUserInfo {
+  user: UserInfo
+  authEvents: [AuthEvent]
+}
+
+type AdminGetUserInfoResult {
+  users: [AdminUserInfo!]
+}
+
+type AdminDeleteUserAccountResult {
+  users: [AdminUserInfo!]
+}
