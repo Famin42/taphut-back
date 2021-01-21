@@ -49,7 +49,7 @@ functions:
       - schedule:
           name: telegram-notifier-event
           description: 'Scan all users filters and search for suitable new appartment'
-          rate: rate(15 minutes)
+          rate: rate(5 minutes)
 
 custom:
   accountId: '${env:AWS_ACCOUNT_ID}'
