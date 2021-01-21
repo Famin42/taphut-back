@@ -1,3 +1,38 @@
+## Route map:
+
+- [Выбор темы](note_01.md#выбор-темы)
+- [Выбор провайдера/архитектуры/необходимых сервисов](note_01.md#выбор-провайдераархитектурынеобходимых-сервисов)
+  - [выбор-провайдера](note_01.md#выбор-провайдера)
+  - [разработкаимплементация-архитектуры](note_01.md#разработкаимплементация-архитектуры)
+    - [AWS Lambda](note_01.md#1-aws-lambda)
+    - [AWS APIGateway](note_01.md#2-aws-apigateway)
+    - [AWS DynamoDB](note_01.md#3-aws-dynamodb)
+    - [AWS CloudWatch](note_01.md#4-aws-cloudwatch)
+    - [AWS System Manager](note_01.md#5-aws-system-manager)
+    - [AWS CloudFormation](note_01.md#6-aws-cloudformation)
+    - [AWS S3](note_01.md#7-aws-s3)
+    - [AWS Cognito](note_01.md#8-aws-cognito)
+    - [AWS AppSync](note_01.md#9-aws-appsync)
+    - [Telegram API](note_01.md#10-telegram-api)
+    - [обобщенная диаграмма развертывания совмещенная с диаграммой компонентов](note_01.md#обобщенная-диаграмма-развертывания-совмещенная-с-диаграммой-компонентов)
+- [Разработка](note_01.md#разработка)
+  - [настройка проекта бэка (webpack, ESLint, Prettier и тп)](note_01.md#31-настройка-проекта-бэка-webpack-eslint-prettier-и-тп)
+  - [настройка деплоя и управления инфраструктурой бэка на AWS (Serverless, Terraform)](note_01.md#32-настройка-деплоя-и-управления-инфраструктурой-бэка-на-aws-serverless-terraform)
+    - [Serverless](note_01.md#serverless)
+    - [Terraform](note_01.md#terraform11)
+    - [AWS-Vault](note_01.md#aws-vault30)
+  - [описание разработки бэка (основные функции, бд, schedule events, GraphQL API, HTTP endpoitns)?](note_01.md#33-описание-разработки-бэка-основные-функции-бд-schedule-events-graphql-api-http-endpoitns)
+    - [AWS Cognito, добавление UserPool-a и Google OAuth](note_01.md#aws-cognito-добавление-userpool-a-и-google-oauth)
+    - [AWS DynamoDB](note_01.md#dynamodb)
+    - [Onliner-Crawler service](note_01.md#onliner-crawler-сервис)
+    - [AppSync Public (taphut-api-public](note_01.md#appsync-public-graphql-endpoint-имя-сервиса-taphut-api-public)
+  - [telegram-bot service (main webhook)](note_01.md#разработка-telegram-bot-service-telegram-bot-)
+    - [telegram-notifier service](note_01.md#разработка-telegram-notifier-service-telegram-notifier-)
+  - [описание разработки Angular client-а + настройка его CI/DI](note_01.md#35-описание-разработки-angular-client-а--настройка-его-cidi)
+- [тестирование](note_01.md#тестирование)
+  - [front](note_01.md#для-фронта-использован-karma--jasmine--ссылка)
+  - [back](note_01.md#для-бэка-использован-фреймворк-jest)
+
 # **Выбор темы**
 
 У меня появилась потребность в поиске съема новой квартиры. Я начал искать выгодоное мне предложение на интернет платформах,
@@ -343,7 +378,7 @@ Bot API - это интерфейс на основе HTTP, созданный �
 
 # **Разработка**
 
-## **3.1 натсройка проекта бэка (webpack, ESLint, Prettier и тп)**
+## **3.1 настройка проекта бэка (webpack, ESLint, Prettier и тп)**
 
 **Основным языком разработки выбран [TypeScript[4]](https://www.typescriptlang.org/docs/handbook/utility-types.html).**
 
@@ -387,7 +422,7 @@ Bot API - это интерфейс на основе HTTP, созданный �
 
 > **ESLint config** [тут](../.eslintrc.js) и [тут](../.eslintignore), а ткаже **Prettier config** [тут](../.prettierrc.js) и [тут](../.prettierignore)
 
-## **3.2 натсройка деплоя и управления инфраструктурой бэка на AWS (Serverless, Terraform)**
+## **3.2 настройка деплоя и управления инфраструктурой бэка на AWS (Serverless, Terraform)**
 
 ### Serverless
 
@@ -1233,39 +1268,6 @@ yarn script-dev src/script/set-telegram-webhook.ts
 ## описание руководства программиста
 
 # Ссылки
-
-1. [Onliner.by](Onliner.by)
-2. [Realt.by](https://realt.by/)
-3. [Domovita.by](https://domovita.by/)
-4. [TypeScript](https://www.typescriptlang.org/docs/handbook/utility-types.html)
-5. [ESLint](https://eslint.org/docs/user-guide/configuring)
-6. [TSLint](https://palantir.github.io/tslint/)
-7. [Prettier](https://prettier.io/docs/en/options.html)
-8. [Webpack](https://webpack.js.org/)
-9. [Yarn](https://classic.yarnpkg.com/en/docs/)
-10. [Serverless](https://www.serverless.com/)
-11. [Terraform](https://www.terraform.io/)
-12. [Vercel](https://vercel.com/docs)
-13. [AWS-Vault](https://github.com/99designs/aws-vault)
-14. [Github](https://github.com/)
-15. [AWS Cognito](https://docs.aws.amazon.com/cognito/)
-16. [AWS S3](https://docs.aws.amazon.com/s3/index.html)
-17. [AWS DynamoDB](https://docs.aws.amazon.com/dynamodb/index.html)
-18. [AWS Lambda](https://docs.aws.amazon.com/lambda/index.html)
-19. [AWS AppSync](https://docs.aws.amazon.com/appsync/latest/devguide/welcome.html)
-20. [AWS VTL](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-context-reference.html)
-21. [AWS APIGateway](https://docs.aws.amazon.com/apigateway/index.html)
-22. [AWS CloudFormation](https://docs.aws.amazon.com/cloudformation/)
-23. [AWS System Manager](https://docs.aws.amazon.com/systems-manager/index.html)
-24. [AWS KMS](https://aws.amazon.com/kms/)
-25. [AWS CloudWatch](https://docs.aws.amazon.com/cloudwatch/index.html)
-26. [AWS Amplify](https://docs.amplify.aws/)
-27. [AWS SNS](https://docs.aws.amazon.com/sns/index.html)
-28. [Angular](https://angular.io/)
-29. [Telegam API](https://core.telegram.org/)
-30. [AWS Vault](https://github.com/99designs/aws-vault)
-
-## Ссылки
 
 1. [Onliner.by](Onliner.by)
 2. [Realt.by](https://realt.by/)
