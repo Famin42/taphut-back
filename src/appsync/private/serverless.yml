@@ -37,6 +37,31 @@ custom:
         field: adminDeleteUserAccount
         request: admin/default-request.vtl
         response: admin/default-response.vtl
+      - dataSource: queryFilter
+        type: Query
+        field: filterByName
+        request: filter/filter.request.vtl
+        response: filter/filter.response.vtl
+      - dataSource: queryFilter
+        type: Query
+        field: filters
+        request: filter/filter.request.vtl
+        response: filter/filter.response.vtl
+      - dataSource: deleteFilter
+        type: Mutation
+        field: deleteFilter
+        request: filter/filter.request.vtl
+        response: filter/filter.response.vtl
+      - dataSource: createFilter
+        type: Mutation
+        field: createFilter
+        request: filter/filter.request.vtl
+        response: filter/filter.response.vtl
+      - dataSource: updateFilter
+        type: Mutation
+        field: updateFilter
+        request: filter/filter.request.vtl
+        response: filter/filter.response.vtl
 
     serviceRole: AppSyncPrivServiceRole
     lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
@@ -44,15 +69,39 @@ custom:
     dataSources:
       - type: AWS_LAMBDA
         name: AdminGetUserInfo
-        description: 'Admin lambda to get user info'
+        description: 'Admin lambda for getting user info'
         config:
           lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:admin-${self:provider.stage}-getUserInfo'
           serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
       - type: AWS_LAMBDA
         name: AdminDeleteUserAccount
-        description: 'Admin lambda to delete user account'
+        description: 'Admin lambda for deleting user account'
         config:
           lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:admin-${self:provider.stage}-deleteUserAccount'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
+      - type: AWS_LAMBDA
+        name: queryFilter
+        description: 'User lambda for getting filters'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-queryFilter'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
+      - type: AWS_LAMBDA
+        name: deleteFilter
+        description: 'User lambda for deleting filter'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-deleteFilter'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
+      - type: AWS_LAMBDA
+        name: createFilter
+        description: 'User lambda for create filter'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-createFilter'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
+      - type: AWS_LAMBDA
+        name: updateFilter
+        description: 'User lambda for update filter'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-updateFilter'
           serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
 
 resources:
@@ -81,6 +130,10 @@ resources:
                   Resource:
                     - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-getUserInfo'
                     - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-deleteUserAccount'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-queryFilter'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-deleteFilter'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-createFilter'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-updateFilter'
     AppSyncLoggingServiceRole:
       Type: 'AWS::IAM::Role'
       Properties:

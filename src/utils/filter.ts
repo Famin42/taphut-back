@@ -33,6 +33,10 @@ export interface IFilterRow {
   filter: IFilter;
 }
 
+export interface IFilterArgs {
+  input: IFilter & { chatId: string };
+}
+
 export async function getFilters(chatId: string): Promise<IQueryOutput<IFilterRow>> {
   logger.info(`getFiltersByChatId`);
   logger.info(`chatId: ${JSON.stringify(chatId)}`);

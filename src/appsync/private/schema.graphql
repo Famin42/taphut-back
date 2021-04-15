@@ -10,6 +10,13 @@ type Mutation {
   # * **returns**: details about the users deleted
   adminDeleteUserAccount(email: String, userid: String): AdminDeleteUserAccountResult!
     @aws_auth(cognito_groups: ["admin"])
+
+  # create user filter
+  createFilter(input: IFilterArgs!): IFilterRow!
+  # # update user filter
+  updateFilter(input: IFilterArgs!): IFilterRow!
+  # delete user filter
+  deleteFilter(chatId: String!, filterName: String!): IFilterRow!
 }
 
 type Query {
@@ -19,6 +26,11 @@ type Query {
   # * **returns**: details about the user
   adminGetUserInfo(email: String, userid: String): AdminGetUserInfoResult!
     @aws_auth(cognito_groups: ["admin"])
+
+  # get list of user filters by chatId
+  filters(chatId: String!): [IFilterRow]!
+  # get user filter by chatId and filterName
+  filterByName(chatId: String!, filterName: String!): IFilterRow!
 }
 
 type UserAttribute {
@@ -60,4 +72,31 @@ type AdminGetUserInfoResult {
 
 type AdminDeleteUserAccountResult {
   users: [AdminUserInfo!]
+}
+
+input IFilterArgs {
+  chatId: String!
+  filterName: String!
+  city: String
+  currency: String
+  minPrice: Int
+  maxPrice: Int
+  roomsNumber: Int
+}
+
+type IFilterRow {
+  chatId: String!
+  filterName: String!
+  createdAt: String!
+  updatedAt: String!
+  filter: IFilter!
+}
+
+type IFilter {
+  filterName: String!
+  city: String
+  currency: String
+  minPrice: Int
+  maxPrice: Int
+  roomsNumber: Int
 }
