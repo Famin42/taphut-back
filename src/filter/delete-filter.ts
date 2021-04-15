@@ -21,6 +21,10 @@ export async function handler(
   logger.info(`event is ${JSON.stringify(event)}`);
   const { chatId, filterName } = event?.arguments || {};
 
-  const filter: IFilterRow = await deleteFilterById(chatId, filterName);
-  callback(null, filter);
+  try {
+    const filter: IFilterRow = await deleteFilterById(chatId, filterName);
+    callback(null, filter);
+  } catch (error) {
+    callback(error.message);
+  }
 }

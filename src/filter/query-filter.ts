@@ -21,13 +21,17 @@ export async function handler(
   logger.info(`event is ${JSON.stringify(event)}`);
   const { chatId, filterName } = event?.arguments || {};
 
-  if (filterName) {
-    // filterByName query
-    const filter: IFilterRow = await getFilterById(chatId, filterName);
-    callback(null, filter);
-  } else {
-    // filters query
-    const { Items } = await getFilters(chatId);
-    callback(null, Items);
+  try {
+    if (filterName) {
+      // filterByName query
+      const filter: IFilterRow = await getFilterById(chatId, filterName);
+      callback(null, filter);
+    } else {
+      // filters query
+      const { Items } = await getFilters(chatId);
+      callback(null, Items);
+    }
+  } catch (error) {
+    callback(error.message);
   }
 }

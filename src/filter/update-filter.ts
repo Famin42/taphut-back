@@ -22,8 +22,12 @@ export async function handler(
   logger.info(`event is ${JSON.stringify(event)}`);
   const { chatId, filter } = event?.arguments || {};
 
-  const cleanFilter = (DynamoDB_CleanObj(filter as any) as any) as IFilter;
+  try {
+    const cleanFilter = (DynamoDB_CleanObj(filter as any) as any) as IFilter;
 
-  const updatedFilter: IFilterRow = await updateFilterById(chatId, cleanFilter);
-  callback(null, updatedFilter);
+    const updatedFilter: IFilterRow = await updateFilterById(chatId, cleanFilter);
+    callback(null, updatedFilter);
+  } catch (error) {
+    callback(error.message);
+  }
 }
