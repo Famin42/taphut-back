@@ -4,7 +4,7 @@ import Big from 'big.js';
 import { IOnlinerApartment, IOnlinerApartmentRow } from 'onliner-crawler/model';
 import { DynamoDB_ParallelUpdate, DynamoDB_Scan, DynamoDB_Whole_Scan } from 'utils/dynamodb';
 import logger, { setDebugLevel } from 'utils/logger';
-import { IFIlter, IFIlterRow } from 'utils/filter';
+import { IFilter, IFilterRow } from 'utils/filter';
 import { ApartmentStatus } from 'utils/models';
 import { TABLES } from 'utils/consts';
 
@@ -30,15 +30,15 @@ export async function getAllNewApartments(): Promise<IOnlinerApartmentRow[]> {
   }
 }
 
-export async function getAllFilters(): Promise<IFIlterRow[]> {
+export async function getAllFilters(): Promise<IFilterRow[]> {
   const { Items = [] } = await DynamoDB_Scan({
     TableName: TABLES.TelegramUserFilters,
   });
 
-  return Items as IFIlterRow[];
+  return Items as IFilterRow[];
 }
 
-export function apartmentIsSuitedForFilter(apartment: IOnlinerApartment, filter: IFIlter): boolean {
+export function apartmentIsSuitedForFilter(apartment: IOnlinerApartment, filter: IFilter): boolean {
   try {
     const city = checkCity(apartment, filter);
     const rooms = checkRooms(apartment, filter);
@@ -51,7 +51,7 @@ export function apartmentIsSuitedForFilter(apartment: IOnlinerApartment, filter:
   }
 }
 
-function checkCity({ location }: IOnlinerApartment, { city }: IFIlter): boolean {
+function checkCity({ location }: IOnlinerApartment, { city }: IFilter): boolean {
   const { address } = location;
   return (
     !city ||
@@ -61,7 +61,7 @@ function checkCity({ location }: IOnlinerApartment, { city }: IFIlter): boolean 
   );
 }
 
-function checkRooms({ rent_type }: IOnlinerApartment, { roomsNumber }: IFIlter): boolean {
+function checkRooms({ rent_type }: IOnlinerApartment, { roomsNumber }: IFilter): boolean {
   if (typeof roomsNumber !== 'number' || roomsNumber === 0) {
     return true;
   }
@@ -71,7 +71,7 @@ function checkRooms({ rent_type }: IOnlinerApartment, { roomsNumber }: IFIlter):
 
 function checkPrice(
   { price }: IOnlinerApartment,
-  { currency, minPrice, maxPrice }: IFIlter
+  { currency, minPrice, maxPrice }: IFilter
 ): boolean {
   const { converted } = price;
 

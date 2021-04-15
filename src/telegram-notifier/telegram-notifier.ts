@@ -4,7 +4,7 @@ import { IOnlinerApartment, IOnlinerApartmentRow } from 'onliner-crawler/model';
 import { onlinerApartmentToString } from 'utils/converters/apartment';
 import logger, { setDebugLevel } from 'utils/logger';
 import { eachLimit, retryNTimes } from 'utils/async';
-import { IFIlter, IFIlterRow } from 'utils/filter';
+import { IFilter, IFilterRow } from 'utils/filter';
 import { sendToUser } from 'utils/telegram';
 import { mustEnv } from 'utils/env';
 import {
@@ -47,9 +47,9 @@ export const handler: APIGatewayProxyHandler = async (
   logger.info(`filters count: ${filters.length}`);
 
   const notifications: Notification[] = [];
-  const filtersByChatId: { [chatId: string]: IFIlter[] } = {};
+  const filtersByChatId: { [chatId: string]: IFilter[] } = {};
 
-  filters.forEach(({ chatId, filter }: IFIlterRow) => {
+  filters.forEach(({ chatId, filter }: IFilterRow) => {
     if (Array.isArray(filtersByChatId[chatId])) {
       filtersByChatId[chatId].push(filter);
     } else {
@@ -59,9 +59,9 @@ export const handler: APIGatewayProxyHandler = async (
 
   newApartments.forEach(({ apartment }: IOnlinerApartmentRow) => {
     Object.keys(filtersByChatId).forEach((chat_id: string) => {
-      const chatFilters: IFIlter[] = filtersByChatId[chat_id];
+      const chatFilters: IFilter[] = filtersByChatId[chat_id];
 
-      chatFilters.some((filter: IFIlter) => {
+      chatFilters.some((filter: IFilter) => {
         if (apartmentIsSuitedForFilter(apartment, filter)) {
           notifications.push({ chat_id, apartment });
 

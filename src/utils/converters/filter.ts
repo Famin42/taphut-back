@@ -1,6 +1,6 @@
-import { IFIlter } from 'utils/filter';
+import { IFilter } from 'utils/filter';
 
-export function filterToString(filter: IFIlter, msg = ''): string {
+export function filterToString(filter: IFilter, msg = ''): string {
   msg = msg.concat(`filter:          ${filter.filterName}\n`);
 
   if (filter.currency) {
@@ -21,10 +21,10 @@ export function filterToString(filter: IFIlter, msg = ''): string {
   return msg;
 }
 
-export function filtersToString(filters: IFIlter[], msg = ''): string {
+export function filtersToString(filters: IFilter[], msg = ''): string {
   msg = msg.concat(`number of filters:   ${filters.length}\n`);
 
-  filters.forEach((filter: IFIlter, index: number) => {
+  filters.forEach((filter: IFilter, index: number) => {
     msg = msg.concat(`${index + 1}. ${filter.filterName}\n`);
   });
 

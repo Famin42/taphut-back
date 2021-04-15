@@ -16,7 +16,7 @@ const FILTERS_MAX_COUNT = 5;
 
 export type Currency = 'USD' | 'BYN';
 
-export interface IFIlter {
+export interface IFilter {
   filterName: string;
   city?: string;
   currency?: Currency;
@@ -25,32 +25,32 @@ export interface IFIlter {
   roomsNumber?: number;
 }
 
-export interface IFIlterRow {
+export interface IFilterRow {
   chatId: string;
   filterName: string;
   createdAt: string;
   updatedAt: string;
-  filter: IFIlter;
+  filter: IFilter;
 }
 
-export async function getFilters(chatId: string): Promise<IQueryOutput<IFIlterRow>> {
+export async function getFilters(chatId: string): Promise<IQueryOutput<IFilterRow>> {
   logger.info(`getFiltersByChatId`);
   logger.info(`chatId: ${JSON.stringify(chatId)}`);
 
-  return await DynamoDB_Query<IFIlterRow>({
+  return await DynamoDB_Query<IFilterRow>({
     TableName: TABLES.TelegramUserFilters,
     KeyConditionExpression: 'chatId = :chatId',
     ExpressionAttributeValues: { ':chatId': chatId },
   });
 }
 
-export async function getFilterById(chatId: string, filterName: string): Promise<IFIlterRow> {
+export async function getFilterById(chatId: string, filterName: string): Promise<IFilterRow> {
   logger.info(`getFilterById`);
   logger.info(`chatId: ${chatId},`);
   logger.info(`filterName: ${JSON.stringify(filterName)}`);
 
   try {
-    return await DynamoDB_Get<IFIlterRow>({
+    return await DynamoDB_Get<IFilterRow>({
       TableName: TABLES.TelegramUserFilters,
       Key: { chatId, filterName },
     });
@@ -62,7 +62,7 @@ export async function getFilterById(chatId: string, filterName: string): Promise
   }
 }
 
-export async function createFilter(chatId: string, filter: IFIlter): Promise<IFIlter> {
+export async function createFilter(chatId: string, filter: IFilter): Promise<IFilter> {
   logger.info(`createFilter`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`filter: ${JSON.stringify(filter)}`);
@@ -75,7 +75,7 @@ export async function createFilter(chatId: string, filter: IFIlter): Promise<IFI
 
   const { filterName } = filter;
   const createdAt = new Date().toISOString();
-  const Item: IFIlterRow = {
+  const Item: IFilterRow = {
     chatId,
     filterName,
     filter,
@@ -106,8 +106,8 @@ export async function createFilter(chatId: string, filter: IFIlter): Promise<IFI
 
 export async function updateFilterById(
   chatId: string,
-  updatedFilter: IFIlter
-): Promise<IFIlterRow> {
+  updatedFilter: IFilter
+): Promise<IFilterRow> {
   logger.info(`updateFilterById`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`updatedFilter: ${JSON.stringify(updatedFilter)}`);
@@ -131,7 +131,7 @@ export async function updateFilterById(
       ReturnValues: 'ALL_NEW',
     });
 
-    return Attributes as IFIlterRow;
+    return Attributes as IFilterRow;
   } catch (error) {
     if (error.toString().indexOf('conditional') > -1) {
       throw new ItemNotFoundError(`item not found for key: ${filterName}`);
@@ -142,7 +142,7 @@ export async function updateFilterById(
   }
 }
 
-export async function deleteFilterById(chatId: string, filterName: string): Promise<IFIlterRow> {
+export async function deleteFilterById(chatId: string, filterName: string): Promise<IFilterRow> {
   logger.info(`deleteFilterById`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`filterName: ${filterName}`);
@@ -158,7 +158,7 @@ export async function deleteFilterById(chatId: string, filterName: string): Prom
       throw new ItemNotFoundError(`item not found for key: ${filterName}`);
     }
 
-    return Attributes as IFIlterRow;
+    return Attributes as IFilterRow;
   } catch (error) {
     if (!(error instanceof ItemNotFoundError)) {
       logger.error(error.message);

@@ -1,5 +1,5 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
-import { Currency, IFIlter, updateFilterById } from 'utils/filter';
+import { Currency, IFilter, updateFilterById } from 'utils/filter';
 import { filterToString } from 'utils/converters/filter';
 import { Argv } from 'yargs';
 import { ItemNotFoundError } from 'utils/dynamodb';
@@ -14,7 +14,7 @@ function buildUpdateFilterById<O extends CustomExtend>(chatId: string): CustomAr
   return async (argv: CustomArgv<O>) => {
     const { name, city, currency, min, max, rooms } = argv;
     try {
-      const updatedFilter: IFIlter = {
+      const updatedFilter: IFilter = {
         filterName: name as string,
         city: city as string | undefined,
         currency: currency as Currency,

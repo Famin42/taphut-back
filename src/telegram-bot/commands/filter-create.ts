@@ -1,6 +1,6 @@
 import { CommandBuilderType, CustomArgv, CustomArgvHandler, CustomExtend } from 'telegram-bot/cli';
 import { filterToString } from 'utils/converters/filter';
-import { createFilter, Currency, IFIlter } from 'utils/filter';
+import { createFilter, Currency, IFilter } from 'utils/filter';
 import { Argv } from 'yargs';
 
 const COMMAND = ['filter-create', 'fc'];
@@ -14,7 +14,7 @@ function buildCreateFilter<O extends CustomExtend>(chatId: string): CustomArgvHa
     try {
       const { name, city, currency, min, max, rooms } = argv;
 
-      const filter: IFIlter = {
+      const filter: IFilter = {
         filterName: name as string,
         city: city as string | undefined,
         currency: currency as Currency,
