@@ -2,6 +2,7 @@ import { AppSyncResolverEvent, Callback, Context } from 'aws-lambda';
 
 import { createFilter, IFilter, IFilterRow } from 'utils/filter';
 import logger, { setDebugLevel } from 'utils/logger';
+import { DynamoDB_CleanObj } from 'utils/dynamodb';
 
 setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 
@@ -21,6 +22,8 @@ export async function handler(
   logger.info(`event is ${JSON.stringify(event)}`);
   const { chatId, filter } = event?.arguments || {};
 
-  const createdFilter = await createFilter(chatId, filter);
+  const cleanFilter = (DynamoDB_CleanObj(filter as any) as any) as IFilter;
+
+  const createdFilter = await createFilter(chatId, cleanFilter);
   callback(null, createdFilter);
 }
