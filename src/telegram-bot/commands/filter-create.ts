@@ -14,7 +14,7 @@ function buildCreateFilter<O extends CustomExtend>(chatId: string): CustomArgvHa
     try {
       const { name, city, currency, min, max, rooms } = argv;
 
-      const filter: IFilter = {
+      const filterToCreate: IFilter = {
         filterName: name as string,
         city: city as string | undefined,
         currency: currency as Currency,
@@ -23,12 +23,9 @@ function buildCreateFilter<O extends CustomExtend>(chatId: string): CustomArgvHa
         roomsNumber: rooms as number | undefined,
       };
 
-      const createdFilter = await createFilter(chatId, filter);
+      const { filter } = await createFilter(chatId, filterToCreate);
 
-      const msg = filterToString(
-        createdFilter,
-        `Filter ${filter.filterName} is created successfully.\n`
-      );
+      const msg = filterToString(filter, `Filter ${filter.filterName} is created successfully.\n`);
 
       argv.respond(msg);
     } catch (error) {

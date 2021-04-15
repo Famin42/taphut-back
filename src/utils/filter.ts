@@ -62,7 +62,7 @@ export async function getFilterById(chatId: string, filterName: string): Promise
   }
 }
 
-export async function createFilter(chatId: string, filter: IFilter): Promise<IFilter> {
+export async function createFilter(chatId: string, filter: IFilter): Promise<IFilterRow> {
   logger.info(`createFilter`);
   logger.info(`chatId: ${chatId}`);
   logger.info(`filter: ${JSON.stringify(filter)}`);
@@ -101,7 +101,7 @@ export async function createFilter(chatId: string, filter: IFilter): Promise<IFi
     }
   }
 
-  return filter;
+  return Item;
 }
 
 export async function updateFilterById(

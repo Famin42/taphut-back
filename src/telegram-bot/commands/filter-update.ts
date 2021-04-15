@@ -14,7 +14,7 @@ function buildUpdateFilterById<O extends CustomExtend>(chatId: string): CustomAr
   return async (argv: CustomArgv<O>) => {
     const { name, city, currency, min, max, rooms } = argv;
     try {
-      const updatedFilter: IFilter = {
+      const filterToUpdate: IFilter = {
         filterName: name as string,
         city: city as string | undefined,
         currency: currency as Currency,
@@ -23,7 +23,7 @@ function buildUpdateFilterById<O extends CustomExtend>(chatId: string): CustomAr
         roomsNumber: rooms as number | undefined,
       };
 
-      const { filter } = await updateFilterById(chatId, updatedFilter);
+      const { filter } = await updateFilterById(chatId, filterToUpdate);
 
       const msg = filterToString(filter, `Filter "${name as string}" is updated successfully.\n`);
 
