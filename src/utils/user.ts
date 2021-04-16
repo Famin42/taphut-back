@@ -18,6 +18,7 @@ interface IUserObj {
 
 export interface IUserInfo {
   user: IUserObj;
+  lastLogin: IAuthEvent;
   authEvents: IAuthEvent[];
 }
 
@@ -26,7 +27,8 @@ export async function getUserInfo(uid: string): Promise<IUserInfo> {
 
   return {
     user: userToUserObj(user),
-    authEvents,
+    lastLogin: authEvents.authEvents[0],
+    authEvents: authEvents.authEvents,
   };
 }
 

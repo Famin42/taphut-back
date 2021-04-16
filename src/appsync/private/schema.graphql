@@ -31,6 +31,9 @@ type Query {
   filters(chatId: String!): [IFilterRow]!
   # get user filter by chatId and filterName
   filterByName(chatId: String!, filterName: String!): IFilterRow!
+
+  # gets recent auth events for the user (logins, password changes, etc...)
+  authEvents(nextToken: String, limit: Int): AuthEventsQueryResult!
 }
 
 type UserAttribute {
@@ -61,9 +64,15 @@ type AuthEvent {
   country: String
 }
 
+type AuthEventsQueryResult {
+  authEvents: [AuthEvent!]!
+  nextToken: String
+}
+
 type AdminUserInfo {
   user: UserInfo
-  authEvents: [AuthEvent]
+  lastLogin: AuthEvent
+  authEvents: [AuthEvent!]
 }
 
 type AdminGetUserInfoResult {

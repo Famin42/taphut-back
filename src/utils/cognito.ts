@@ -145,19 +145,38 @@ const MAX_AUTH_EVENTS = 20;
  */
 export async function getAuthEvents(
   userId: string,
-  max: number = MAX_AUTH_EVENTS
-): Promise<IAuthEvent[]> {
+  NextToken: string | undefined = undefined,
+  MaxResults: number = MAX_AUTH_EVENTS
+): Promise<{
+  authEvents: IAuthEvent[];
+  nextToken?: string;
+}> {
   const params: AdminListUserAuthEventsRequest = {
     UserPoolId: USER_POOL_ID,
     Username: userId,
-    MaxResults: max,
+    MaxResults,
+    NextToken,
   };
 
   const authEventsResult: AdminListUserAuthEventsResponse = await cognito
     .adminListUserAuthEvents(params)
     .promise();
 
-  return authEventsResult.AuthEvents ? authEventsResult.AuthEvents.map(sanitizeAuthEvent) : [];
+  return {
+    nextToken: authEventsResult.NextToken,
+    authEvents: authEventsResult.AuthEvents
+      ? authEventsResult.AuthEvents.map(sanitizeAuthEvent)
+      : [],
+  };
+}
+
+/**
+ * Get the timestamp of the creation of a given user account
+ * @param userId userid / username from Cognito
+ */
+export async function getAccountCreationDate(userId: string): Promise<Date | undefined> {
+  const { user } = await getUser(userId);
+  return user.UserCreateDate;
 }
 
 /**

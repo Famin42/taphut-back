@@ -62,6 +62,11 @@ custom:
         field: updateFilter
         request: filter/filter.request.vtl
         response: filter/filter.response.vtl
+      - dataSource: QueryAuthEvents
+        type: Query
+        field: authEvents
+        request: authwrapper/authevents-request.vtl
+        response: authwrapper/authevents-response.vtl
 
     serviceRole: AppSyncPrivServiceRole
     lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
@@ -103,6 +108,12 @@ custom:
         config:
           lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-updateFilter'
           serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
+      - type: AWS_LAMBDA
+        name: QueryAuthEvents
+        description: 'Queries for auth events'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:authwrapper-${self:provider.stage}-queryAuthEvents'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
 
 resources:
   Resources:
@@ -128,12 +139,9 @@ resources:
                   Action:
                     - 'lambda:invokeFunction'
                   Resource:
-                    - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-getUserInfo'
-                    - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-deleteUserAccount'
-                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-queryFilter'
-                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-deleteFilter'
-                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-createFilter'
-                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-updateFilter'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:authwrapper-${self:provider.stage}-*'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:*:function:admin-${self:provider.stage}-*'
+                    - 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:filter-${self:provider.stage}-*'
     AppSyncLoggingServiceRole:
       Type: 'AWS::IAM::Role'
       Properties:
