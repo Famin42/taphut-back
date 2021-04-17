@@ -1,0 +1,60 @@
+service: cognitotriggers
+
+plugins:
+  - serverless-webpack
+  - serverless-plugin-aws-alerts
+
+configValidationMode: error
+
+provider:
+  name: aws
+  endpointType: REGIONAL
+  runtime: nodejs12.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    USER_POOL_ID: ${env:USER_POOL_ID}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ssm:DescribeParameters
+        - ssm:GetParameter
+      Resource:
+        - 'arn:aws:ssm:${opt:region, self:provider.region}:*:parameter/recaptchaSecretKey'
+        - 'arn:aws:ssm:${opt:region, self:provider.region}:*:parameter/sendgridApiKey'
+    - Effect: Allow
+      Action:
+        - cognito-idp:AdminGetUser
+      Resource:
+        - 'arn:aws:cognito-idp:${opt:region, self:provider.region}:*:userpool/${env:USER_POOL_ID}'
+
+functions:
+  presignup:
+    handler: presignup.handler
+    timeout: 10
+    events:
+      - cognitoUserPool:
+          pool: ${env:USER_POOL_NAME}
+          trigger: PreSignUp
+          existing: true
+  preauth:
+    handler: preauth.handler
+    timeout: 10
+    events:
+      - cognitoUserPool:
+          pool: ${env:USER_POOL_NAME}
+          trigger: PreAuthentication
+          existing: true
+  cognitoCustomMessage:
+    handler: cognitocustommessage.handler
+    timeout: 5
+    events:
+      - cognitoUserPool:
+          pool: ${env:USER_POOL_NAME}
+          trigger: CustomMessage
+          existing: true
+
+custom:
+  accountId: '${env:AWS_ACCOUNT_ID}'
+  webpack: ${file(../../serverless/globals.yml):webpack}
+  alerts: ${file(../../serverless/globals.yml):alerts}
