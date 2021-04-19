@@ -1,6 +1,22 @@
 {
   "version" : "2017-02-28",
   "operation" : "Scan",
-  "limit": $util.defaultIfNull($ctx.args.limit, 10),
-  "nextToken": $util.toJson($util.defaultIfNull($ctx.args.nextToken, null)),
+  
+  #set( $input = $ctx.args.input )
+
+  "limit": $util.defaultIfNull($input.limit, 10),
+  "nextToken": $util.toJson($util.defaultIfNull($input.nextToken, null)),
+
+  #if( !${$util.isNullOrEmpty($input.roomsNumber)} )
+    "filter": {
+      "expression" : "#path.#rent_type = :roomsNumber",
+      "expressionNames" : {
+        "#path" : "apartment",
+        "#rent_type":"rent_type",
+      },
+      "expressionValues" : {
+        ":roomsNumber" : $util.dynamodb.toDynamoDBJson($input.roomsNumber)
+      }
+    }
+  #end
 }

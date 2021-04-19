@@ -4,7 +4,17 @@ schema {
 
 type Query {
   # get onliner apartments
-  onlinerApartments(limit: Int = 10, nextToken: String = null): OnlinerApartmentRowWithPagination
+  onlinerApartments(input: IFilterArgs!): OnlinerApartmentRowWithPagination
+}
+
+input IFilterArgs {
+  limit: Int
+  nextToken: String
+  city: String
+  currency: String
+  minPrice: Int
+  maxPrice: Int
+  roomsNumber: String
 }
 
 type OnlinerApartmentRowWithPagination {
