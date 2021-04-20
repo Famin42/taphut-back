@@ -27,6 +27,11 @@ custom:
     authenticationType: AMAZON_COGNITO_USER_POOLS
     mappingTemplatesLocation: .
     mappingTemplates:
+      - dataSource: AdminGetUsers
+        type: Query
+        field: adminGetUsers
+        request: admin/default-request.vtl
+        response: admin/default-response.vtl
       - dataSource: AdminGetUserInfo
         type: Query
         field: adminGetUserInfo
@@ -72,6 +77,12 @@ custom:
     lambdaServiceRoleName: 'Lambda-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
     loggingServiceRoleName: 'Logging-${self:custom.appSync.serviceRole}-taphut-${opt:region, self:provider.region}'
     dataSources:
+      - type: AWS_LAMBDA
+        name: AdminGetUsers
+        description: 'Admin lambda for getting users with pagination'
+        config:
+          lambdaFunctionArn: 'arn:aws:lambda:${opt:region, self:provider.region}:${self:custom.accountId}:function:admin-${self:provider.stage}-getUsers'
+          serviceRoleArn: '${self:custom.appSyncLambdaServiceRole}'
       - type: AWS_LAMBDA
         name: AdminGetUserInfo
         description: 'Admin lambda for getting user info'

@@ -20,6 +20,10 @@ type Mutation {
 }
 
 type Query {
+  # lookup users as an admin
+  adminGetUsers(PaginationToken: String, Limit: Int): AdminUserData!
+    @aws_auth(cognito_groups: ["admin"])
+
   # lookup info about a user as an admin
   # * **email**: lookup user by email address
   # * **userid**: lookup user by their userid
@@ -108,4 +112,27 @@ type IFilter {
   minPrice: Int
   maxPrice: Int
   roomsNumber: Int
+}
+
+type AdminUserData {
+  Users: [AdminUsersInfo]!
+  PaginationToken: String
+}
+
+type AdminUsersInfo {
+  Username: String
+  Attributes: AdminUserInfoAttr
+  UserCreateDate: String
+  UserLastModifiedDate: String
+  Enabled: Boolean
+  UserStatus: String
+}
+
+type AdminUserInfoAttr {
+  sub: String
+  email_verified: String
+  email: String
+  chatId: String
+  identities: String
+  picture: String
 }

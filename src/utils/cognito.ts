@@ -9,8 +9,11 @@ import {
   UserType,
 } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 
+export const CHAT_ID_KEY = 'custom:chatId';
+
 export const cognito = new CognitoIdentityServiceProvider({
   apiVersion: '2016-04-18',
+  region: 'us-east-1',
 });
 
 export const USER_POOL_ID = process.env.USER_POOL_ID || '';
@@ -208,4 +211,63 @@ export async function getUsersByEmail(
     }
   }
   return userList;
+}
+
+export interface ICognitoPaginationParams {
+  PaginationToken?: string;
+  Limit?: number;
+}
+export async function getUsersByAdmin(
+  params: ICognitoPaginationParams
+): Promise<{
+  PaginationToken?: string;
+  Users: IUserType[];
+}> {
+  const result = await cognito
+    .listUsers({
+      UserPoolId: USER_POOL_ID,
+      ...params,
+    })
+    .promise();
+
+  if (result.Users === undefined || result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.query"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not query DynamoDB: ${JSON.stringify(params)}`);
+  }
+
+  return {
+    PaginationToken: result.PaginationToken,
+    Users: result.Users.map(transformUserType),
+  };
+}
+
+export interface IUserType extends Omit<UserType, 'MFAOptions' | 'Attributes'> {
+  Attributes: Record<string, string>;
+}
+
+export function transformUserType({
+  Username,
+  UserCreateDate,
+  UserLastModifiedDate,
+  Enabled,
+  UserStatus,
+  Attributes,
+}: UserType): IUserType {
+  const attr =
+    Attributes?.reduce((prev, { Name, Value }) => {
+      if (Name === CHAT_ID_KEY) {
+        return { ...prev, ['chatId']: Value };
+      }
+      return { ...prev, [Name]: Value };
+    }, {}) || {};
+  return {
+    Username,
+    UserCreateDate,
+    UserLastModifiedDate,
+    Enabled,
+    UserStatus,
+    Attributes: attr,
+  };
 }

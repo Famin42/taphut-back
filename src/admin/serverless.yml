@@ -23,6 +23,9 @@ provider:
         - 'arn:aws:cognito-idp:${opt:region, self:provider.region}:*:userpool/${env:USER_POOL_ID}'
 
 functions:
+  getUsers:
+    handler: get-users.handler
+    timeout: 10
   getUserInfo:
     handler: getuserinfo.handler
     timeout: 10
