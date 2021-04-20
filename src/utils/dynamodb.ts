@@ -26,6 +26,21 @@ const dynamodb = {
   db: new DynamoDB(options),
 };
 
+export async function BatchWriteItem(
+  params: DynamoDB.DocumentClient.BatchWriteItemInput
+): Promise<PromiseResult<DynamoDB.DocumentClient.BatchWriteItemOutput, AWSError>> {
+  const result = await dynamodb.doc.batchWrite(params).promise();
+
+  if (result?.$response?.error) {
+    logger.error(`Error happened during run "dynamodb.doc.put"`);
+    logger.error(`params: ${JSON.stringify(params)}`);
+    logger.error(`resut: ${JSON.stringify(result)}`);
+    throw new Error(`Could not put into DynamoDB: ${JSON.stringify(params)}`);
+  }
+
+  return result;
+}
+
 interface IParallelPutItems<T>
   extends Pick<DynamoDB.DocumentClient.PutItemInput, 'TableName' | 'ConditionExpression'> {
   Items: T[];
@@ -43,7 +58,7 @@ interface IParallelPutItems<T>
  */
 export function DynamoDB_ParallelPut<T>({
   Items,
-  parallelism = 5,
+  parallelism = 10,
   ...params
 }: IParallelPutItems<T>): Promise<
   PromiseResult<DynamoDB.DocumentClient.PutItemOutput, AWSError>[]

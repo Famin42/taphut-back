@@ -1,9 +1,11 @@
 import { APIGatewayProxyHandler, APIGatewayEvent, Callback, Context } from 'aws-lambda';
 import fetch from 'node-fetch';
-import { eachLimit } from 'utils/async';
 
-import logger, { setDebugLevel } from 'utils/logger';
 import { IOnlinerApartment, IOnlinerData, IOnlinerPagiantion } from './model';
+import { APARTMENTS_IS_NOT_OLDER_THEN_DAYS } from 'utils/consts';
+import logger, { setDebugLevel } from 'utils/logger';
+import { decreaseDate, isAfter } from 'utils/date';
+import { eachLimit } from 'utils/async';
 import {
   convertToNewOnlinerApartmentRowItem,
   filterOutOnlyNewValues,
@@ -17,6 +19,8 @@ setDebugLevel(process.env.DEBUG_LEVEL || 'info');
 export const ONLINER_TIMEOUT = 2000;
 export const ONLINER_LIMIT = 500;
 export const DYNAMO_DB_SCAN_LIMIT = 500;
+
+// TODO: price from STRING to NUMBER
 
 /**
  * 1. Get first batch of items from onliner
@@ -89,7 +93,15 @@ async function getApartmentMap(URLs: URL[]): Promise<Map<number, IOnlinerApartme
       const batchOfData = await fetchOnlinerData(url);
       logger.info(`Keys in dataMap: ${dataMap.size}`);
       logger.info(`Keys in batchOfData: ${batchOfData.size}`);
-      batchOfData.forEach((batchItem: IOnlinerApartment) => dataMap.set(batchItem.id, batchItem));
+      batchOfData.forEach((batchItem: IOnlinerApartment) => {
+        const { created_at } = batchItem;
+        const timeAgo = decreaseDate(APARTMENTS_IS_NOT_OLDER_THEN_DAYS, 'days');
+
+        // addition check that apartment is not older then 10 days
+        if (created_at && isAfter(created_at, timeAgo)) {
+          dataMap.set(batchItem.id, batchItem);
+        }
+      });
     },
     10,
     2500

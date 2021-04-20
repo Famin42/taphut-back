@@ -12,6 +12,18 @@ export function increaseDate(
   return moment(date).add(increaseDate, dateType).toDate();
 }
 
+export function decreaseDate(
+  increaseDate: moment.DurationInputArg1,
+  dateType: moment.DurationInputArg2,
+  date = new Date()
+): Date {
+  return moment(date).subtract(increaseDate, dateType).toDate();
+}
+
+export function isAfter(base: Date | string, toCompare: Date | string): boolean {
+  return moment(base).isAfter(toCompare);
+}
+
 /**
  * get minute of day for a date
  * @param {Date} date

@@ -7,16 +7,97 @@
   "limit": $util.defaultIfNull($input.limit, 10),
   "nextToken": $util.toJson($util.defaultIfNull($input.nextToken, null)),
 
-  #if( !${$util.isNullOrEmpty($input.roomsNumber)} )
+  #set( $expNames  = { } )
+  #set( $expression = "" )
+  #set( $expValues = {} )
+
+  ## check addresses to filter
+  #if( $util.isList($input.addresses) )
+    #set( $addressesCounter = 0 )
+    
+    #foreach($address in $input.addresses)
+      $util.qr($expNames.put("#address", "address"))
+      #set( $path  = "#address" )
+      #set( $key  = "address_${addressesCounter}" )
+
+      ## if expression is empty yet
+      #if( $util.isNullOrEmpty($expression) )
+        #set ( $expression = "contains(${path}, :${key})")
+      #else
+        #set( $expression = "${expression} AND contains(${path}, :${key})" )
+      #end
+      
+      $util.qr($expValues.put(":${key}", $util.dynamodb.toDynamoDB($address)))
+      #set( $addressesCounter =  $addressesCounter + 1)
+    #end
+  #end
+
+  ## check roomsNumber to filter
+  #if( !$util.isNullOrEmpty($input.roomsNumber) )
+    
+    $util.qr($expNames.put("#apartment", "apartment"))
+    $util.qr($expNames.put("#rent_type", "rent_type"))
+    #set( $path  = "#apartment.#rent_type" )
+    #set( $key  = "roomsNumber" )
+
+    ## if expression is empty yet
+    #if( $util.isNullOrEmpty($expression) )
+      #set ( $expression = "${path} = :${key}")
+    #else
+      #set( $expression = "${expression} AND ${path} = :${key}" )
+    #end
+      
+    $util.qr($expValues.put(":${key}", $util.dynamodb.toDynamoDB($input.roomsNumber)))
+  #end
+
+  ## check roomsNumber to minPrice
+  #if( $util.isNumber($input.minPrice) && !$util.isNullOrEmpty($input.currency) )
+    $util.qr($expNames.put("#apartment", "apartment"))
+    $util.qr($expNames.put("#price", "price"))
+    $util.qr($expNames.put("#converted", "converted"))
+    $util.qr($expNames.put("#${input.currency}", $input.currency))
+    $util.qr($expNames.put("#amount", "amount"))
+    #set( $path  = "#apartment.#price.#converted.#${input.currency}.#amount" )
+    #set( $key  = "minPrice" )
+
+    ## if expression is empty yet
+    #if( $util.isNullOrEmpty($expression) )
+      #set ( $expression = "${path} >= :${key}")
+    #else
+      #set( $expression = "${expression} AND ${path} >= :${key}" )
+    #end
+
+    $util.qr($expValues.put(":${key}", $util.dynamodb.toDynamoDB($input.minPrice)))
+  #end
+
+  ## check roomsNumber to maxPrice
+  #if( $util.isNumber($input.maxPrice) && !$util.isNullOrEmpty($input.currency) )
+    $util.qr($expNames.put("#apartment", "apartment"))
+    $util.qr($expNames.put("#price", "price"))
+    $util.qr($expNames.put("#converted", "converted"))
+    $util.qr($expNames.put("#${input.currency}", $input.currency))
+    $util.qr($expNames.put("#amount", "amount"))
+    #set( $path  = "#apartment.#price.#converted.#${input.currency}.#amount" )
+    #set( $key  = "maxPrice" )
+
+    ## if expression is empty yet
+    #if( $util.isNullOrEmpty($expression))
+      #set ( $expression = "${path} <= :${key}")
+    #else
+      #set( $expression = "${expression} AND ${path} <= :${key}" )
+    #end
+
+    $util.qr($expValues.put(":${key}", $util.dynamodb.toDynamoDB($input.maxPrice)))
+  #end
+
+
+
+  ## if there is at least one filter
+  #if( !$util.isNullOrEmpty($expression) && !${expNames.isEmpty()} )
     "filter": {
-      "expression" : "#path.#rent_type = :roomsNumber",
-      "expressionNames" : {
-        "#path" : "apartment",
-        "#rent_type":"rent_type",
-      },
-      "expressionValues" : {
-        ":roomsNumber" : $util.dynamodb.toDynamoDBJson($input.roomsNumber)
-      }
+      "expression" : "$expression",
+      "expressionNames" : $utils.toJson($expNames),
+      "expressionValues" : $util.toJson($expValues)
     }
   #end
 }

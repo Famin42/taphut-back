@@ -2,13 +2,14 @@ import { PromiseResult } from 'aws-sdk/lib/request';
 import { DynamoDB, AWSError } from 'aws-sdk';
 import { URL } from 'url';
 
-import { APARTMENTS_STORING_DURATION_IN_MONTHS, ONLINER_URI } from 'utils/consts';
+import { APARTMENTS_STORING_DURATION_IN_WEEKS, ONLINER_URI } from 'utils/consts';
 import { DynamoDB_ParallelPut, DynamoDB_Scan } from 'utils/dynamodb';
 import { IOnlinerApartment, IOnlinerApartmentRow } from './model';
 import { getUnixTimeInSeconds, increaseDate } from 'utils/date';
 import { DYNAMO_DB_SCAN_LIMIT } from './onliner-crawler';
 import { TABLES } from 'utils/consts';
 import logger from 'utils/logger';
+import { ApartmentStatus } from 'utils/models';
 
 export interface IOnlinerURLParams {
   limit: number;
@@ -42,14 +43,23 @@ export async function parallelPutOnlinerApartments(Items: IOnlinerApartmentRow[]
  * @param item item
  * @param status "NEW" | "IN_FLIGHT" | "ERROR" | "OLD"
  */
-export function convertToNewOnlinerApartmentRowItem(item: IOnlinerApartment): IOnlinerApartmentRow {
+export function convertToNewOnlinerApartmentRowItem(
+  item: IOnlinerApartment,
+  status: ApartmentStatus = 'NEW'
+): IOnlinerApartmentRow {
   const expirationTime = getUnixTimeInSeconds(
-    increaseDate(APARTMENTS_STORING_DURATION_IN_MONTHS, 'months')
+    increaseDate(APARTMENTS_STORING_DURATION_IN_WEEKS, 'week')
   );
+
+  Object.keys(item.price.converted).forEach((key: string) => {
+    item.price.converted[key].amount = +item.price.converted[key].amount;
+  });
+  item.price.amount = +item.price.amount;
 
   return {
     id: item.id,
-    status: 'NEW',
+    status,
+    address: item.location.address.toLowerCase(),
     apartment: item,
     createdAt: new Date().toISOString(),
     expirationTime,

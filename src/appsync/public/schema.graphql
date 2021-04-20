@@ -8,9 +8,9 @@ type Query {
 }
 
 input IFilterArgs {
-  limit: Int
+  limit: Int!
   nextToken: String
-  city: String
+  addresses: [String]
   currency: String
   minPrice: Int
   maxPrice: Int
@@ -48,7 +48,7 @@ type OnlinerApartment {
 type OnlinerApartmentPrice {
   amount: String
   currency: String
-  converted: Converter
+  converted: ConvertedKeys
 }
 
 type OnlinerApartmentLocation {
@@ -62,11 +62,12 @@ type OnlinerApartmentContact {
   owner: Boolean
 }
 
-type Converter {
-  key: ConverterSun
+type ConvertedKeys {
+  USD: Converter
+  BYN: Converter
 }
 
-type ConverterSun {
+type Converter {
   amount: String
   currency: String
 }

@@ -2,6 +2,7 @@ import { ApartmentStatus } from 'utils/models';
 
 export interface IOnlinerApartmentRow {
   id: number;
+  address: string;
   status: ApartmentStatus;
   apartment: IOnlinerApartment;
   createdAt: string;
@@ -25,11 +26,11 @@ export interface IOnlinerPagiantion {
 export interface IOnlinerApartment {
   id: number;
   price: {
-    amount: string;
+    amount: number;
     currency: OnlinerCurrences;
     converted: {
       [key: string]: {
-        amount: string;
+        amount: number;
         currency: OnlinerCurrences;
       };
     };
@@ -48,7 +49,7 @@ export interface IOnlinerApartment {
 
 export type OnlinerCurrences = 'USD' | 'BYN';
 
-export type OnlinerRentType = '1_rooms' | '2_rooms' | '3_rooms' | '4_rooms' | '5_rooms';
+export type OnlinerRentType = '1_room' | '2_rooms' | '3_rooms' | '4_rooms' | '5_rooms';
 
 export interface IOnlinerApartmentLocation {
   address: string;
